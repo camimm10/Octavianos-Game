@@ -150,8 +150,7 @@ public class Etapa2Controller : MonoBehaviour
         }, skin);
 
         // 6. Algo ha cambiado
-        if (symbols != null) symbols.SetActive(true);
-        yield return new WaitForSeconds(1.2f);
+        yield return MostrarSimbolos();
         yield return StageFlow.Talk(new[]
         {
             new DialogueLine("Octavio", "Qué raro… nunca me había fijado en esas formas de las rocas.", true, Amarillo),
@@ -204,6 +203,42 @@ public class Etapa2Controller : MonoBehaviour
             rb.isKinematic = false;
             rb.linearVelocity = Vector3.zero;
         });
+    }
+
+    /// <summary>
+    /// Pone los símbolos de Destello centrados delante de Octavio, mirando hacia el mar abierto
+    /// (lejos de la isla, para que no queden tapados), con la cámara detrás y una animación de aparición.
+    /// </summary>
+    IEnumerator MostrarSimbolos()
+    {
+        if (symbols == null) yield break;
+
+        var isla = GameObject.Find("Isla");
+        Vector3 dir = isla != null ? player.transform.position - isla.transform.position : player.transform.forward;
+        dir.y = 0f;
+        if (dir.sqrMagnitude < 0.01f) dir = Vector3.forward;
+        dir.Normalize();
+
+        rb.linearVelocity = Vector3.zero;
+        player.transform.rotation = Quaternion.LookRotation(dir);
+        rb.rotation = player.transform.rotation;
+        var cam = FindAnyObjectByType<ThirdPersonCamera>();
+        if (cam != null) cam.LookTowards(dir);
+
+        Transform s = symbols.transform;
+        s.position = player.transform.position + dir * 6f + Vector3.up * 1.6f;
+        s.rotation = Quaternion.LookRotation(dir);
+        symbols.SetActive(true);
+
+        Vector3 finalScale = Vector3.one * 1.4f;
+        for (float t = 0f; t < 0.8f; t += Time.deltaTime)
+        {
+            float k = Mathf.SmoothStep(0f, 1f, t / 0.8f);
+            s.localScale = finalScale * k;
+            yield return null;
+        }
+        s.localScale = finalScale;
+        yield return new WaitForSeconds(1f);
     }
 
     IEnumerator ClearPromptLater(float seconds)

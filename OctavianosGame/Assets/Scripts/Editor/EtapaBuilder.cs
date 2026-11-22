@@ -233,7 +233,7 @@ public static class EtapaBuilder
         var marca       = MatEmisiva("MarcaBusqueda", new Color(0.6f, 0.95f, 1f), 1.2f);
         var simRojo     = MatEmisiva("SimboloRojo",  new Color(0.9f, 0.15f, 0.15f), 2f);
         var simVerde    = MatEmisiva("SimboloVerde", new Color(0.15f, 0.85f, 0.3f), 2f);
-        var simAzul     = MatEmisiva("SimboloAzul",  new Color(0.15f, 0.4f, 0.95f), 2f);
+        var simAzul     = MatEmisiva("SimboloAzul",  new Color(0.1f, 0.3f, 1f), 2.2f); // azul intenso (con más brillo se veía blanco)
         var pielOcta    = Mat("PielOctavio", new Color(0.85f, 0.45f, 0.35f));
         var blanco      = Mat("OjoBlanco", Color.white);
         var negro       = Mat("OjoPupila", new Color(0.05f, 0.05f, 0.05f));
@@ -331,9 +331,9 @@ public static class EtapaBuilder
         var tri = new GameObject("Triangulo").transform;
         tri.SetParent(simbolos, false);
         tri.localPosition = new Vector3(2.2f, 1.2f, 0f);
-        Primitiva(PrimitiveType.Cube, "Base", tri, new Vector3(0f, -0.45f, 0f), new Vector3(1.2f, 0.12f, 0.1f), simAzul);
-        Primitiva(PrimitiveType.Cube, "LadoIzq", tri, new Vector3(-0.3f, 0.07f, 0f), new Vector3(1.2f, 0.12f, 0.1f), simAzul).transform.localRotation = Quaternion.Euler(0f, 0f, 60f);
-        Primitiva(PrimitiveType.Cube, "LadoDer", tri, new Vector3(0.3f, 0.07f, 0f), new Vector3(1.2f, 0.12f, 0.1f), simAzul).transform.localRotation = Quaternion.Euler(0f, 0f, -60f);
+        Primitiva(PrimitiveType.Cube, "Base", tri, new Vector3(0f, -0.45f, 0f), new Vector3(1.2f, 0.2f, 0.12f), simAzul);
+        Primitiva(PrimitiveType.Cube, "LadoIzq", tri, new Vector3(-0.3f, 0.07f, 0f), new Vector3(1.2f, 0.2f, 0.12f), simAzul).transform.localRotation = Quaternion.Euler(0f, 0f, 60f);
+        Primitiva(PrimitiveType.Cube, "LadoDer", tri, new Vector3(0.3f, 0.07f, 0f), new Vector3(1.2f, 0.2f, 0.12f), simAzul).transform.localRotation = Quaternion.Euler(0f, 0f, -60f);
 
         // ---------- Octavio con el humano ----------
         var octavio = CrearPulpo("Octavio", new Vector3(0f, 2f, 0f), pielOcta, blanco, negro, out var cuerpo, out var piel);

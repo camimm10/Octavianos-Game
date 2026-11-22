@@ -35,6 +35,15 @@ public class ThirdPersonCamera : MonoBehaviour
         if (target != null) yaw = target.eulerAngles.y;
     }
 
+    /// <summary>Coloca la cámara detrás del objetivo mirando en esa dirección (para escenas).</summary>
+    public void LookTowards(Vector3 direction, float newPitch = 12f)
+    {
+        direction.y = 0f;
+        if (direction.sqrMagnitude < 0.001f) return;
+        yaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+        pitch = newPitch;
+    }
+
     void LateUpdate()
     {
         if (target == null) return;
