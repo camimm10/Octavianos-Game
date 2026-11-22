@@ -56,6 +56,7 @@ public class NPCDialogue : MonoBehaviour
     {
         talking = true;
         if (player != null) player.CanMove = false;
+        DialogueUI.Get().SetObjective(""); // durante la conversación no se muestra el objetivo
 
         // Mirarse el uno al otro
         Vector3 dir = player.transform.position - transform.position;
