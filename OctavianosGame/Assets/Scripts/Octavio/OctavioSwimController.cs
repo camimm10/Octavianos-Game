@@ -105,6 +105,8 @@ public class OctavioSwimController : MonoBehaviour
 
     void FixedUpdate()
     {
+        if (rb.isKinematic) return; // durante escenas animadas (p. ej. la erupción) lo mueve el guion
+
         // Acelera poco a poco: sensación de nadar, no de andar
         float t = 1f - Mathf.Exp(-acceleration * Time.fixedDeltaTime);
         rb.linearVelocity = Vector3.Lerp(rb.linearVelocity, desiredVelocity, t);

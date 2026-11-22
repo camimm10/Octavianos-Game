@@ -205,6 +205,220 @@ public static class EtapaBuilder
         Debug.Log("[Octavianos] Etapa 1 creada. Pulsa Play y nada con WASD, Espacio/Ctrl, Shift. Colores: 1, 2, 3, 0.");
     }
 
+    // =====================================================================
+    //  ETAPA 2 · EL GÉISER DESTELLO
+    // =====================================================================
+
+    const string ScenePath2 = "Assets/Scenes/Etapa2_Geiser.unity";
+
+    [MenuItem("Octavianos/Crear Etapa 2 (Géiser)")]
+    public static void CrearEtapa2()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath2) != null &&
+            !EditorUtility.DisplayDialog("Etapa 2",
+                "La escena Etapa2_Geiser ya existe. ¿Quieres rehacerla desde cero?", "Sí, rehacer", "Cancelar"))
+            return;
+
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+
+        // ---------- Materiales ----------
+        var arenaOscura = Mat("ArenaOscura",    new Color(0.32f, 0.27f, 0.22f));
+        var volcanica   = Mat("RocaVolcanica",  new Color(0.14f, 0.12f, 0.12f));
+        var crater      = Mat("Crater",         new Color(0.05f, 0.04f, 0.04f));
+        var lava        = MatEmisiva("BrilloGeiser", new Color(1f, 0.45f, 0.1f), 3f);
+        var burbuja     = MatEmisiva("Burbuja",      new Color(0.75f, 0.92f, 1f), 0.6f);
+        var guia        = MatEmisiva("BrilloGuia",   new Color(1f, 0.55f, 0.2f), 1.5f);
+        var arenaIsla   = Mat("ArenaIsla",      new Color(0.86f, 0.78f, 0.55f));
+        var marca       = MatEmisiva("MarcaBusqueda", new Color(0.6f, 0.95f, 1f), 1.2f);
+        var simRojo     = MatEmisiva("SimboloRojo",  new Color(0.9f, 0.15f, 0.15f), 2f);
+        var simVerde    = MatEmisiva("SimboloVerde", new Color(0.15f, 0.85f, 0.3f), 2f);
+        var simAzul     = MatEmisiva("SimboloAzul",  new Color(0.15f, 0.4f, 0.95f), 2f);
+        var pielOcta    = Mat("PielOctavio", new Color(0.85f, 0.45f, 0.35f));
+        var blanco      = Mat("OjoBlanco", Color.white);
+        var negro       = Mat("OjoPupila", new Color(0.05f, 0.05f, 0.05f));
+        var pielHumano  = Mat("PielHumano", new Color(0.95f, 0.78f, 0.62f));
+        var camiseta    = Mat("Camiseta",   new Color(0.92f, 0.92f, 0.96f));
+        var pantalon    = Mat("Pantalon",   new Color(0.20f, 0.25f, 0.45f));
+
+        // ---------- Fondo ----------
+        var suelo = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        suelo.name = "FondoVolcanico";
+        suelo.transform.localScale = new Vector3(16f, 1f, 16f); // 160 x 160 m
+        suelo.GetComponent<Renderer>().sharedMaterial = arenaOscura;
+
+        Vector3 geiserPos = new Vector3(0f, 0f, 35f);
+        Vector3 islaCentro = new Vector3(70f, -2f, 75f);
+
+        var decorado = new GameObject("Decorado").transform;
+        Random.InitState(7);
+        for (int i = 0; i < 45; i++)
+        {
+            Vector3 p = PuntoLejosDelCentro(8f, 70f);
+            if (DistanciaAlSegmento(p, Vector3.zero, geiserPos) < 7f) continue;   // deja libre el camino al géiser
+            if ((p - new Vector3(islaCentro.x, 0f, islaCentro.z)).magnitude < 32f) continue; // y la isla
+            var r = GameObject.CreatePrimitive(Random.value < 0.5f ? PrimitiveType.Cube : PrimitiveType.Sphere);
+            r.name = "RocaVolcanica_" + i;
+            r.transform.SetParent(decorado);
+            r.transform.position = p;
+            r.transform.localScale = new Vector3(Random.Range(1.5f, 6f), Random.Range(1f, 5f), Random.Range(1.5f, 6f));
+            r.transform.rotation = Quaternion.Euler(Random.Range(-20f, 20f), Random.Range(0f, 360f), Random.Range(-20f, 20f));
+            r.GetComponent<Renderer>().sharedMaterial = volcanica;
+        }
+
+        // Pequeñas grietas brillantes que marcan el camino hacia el géiser
+        for (int i = 1; i <= 6; i++)
+        {
+            float k = i / 7f;
+            Vector3 p = Vector3.Lerp(new Vector3(0f, 0f, 4f), geiserPos, k) + new Vector3((i % 2 == 0 ? 2.5f : -2.5f), 0.05f, 0f);
+            var g = Primitiva(PrimitiveType.Sphere, "Grieta_" + i, decorado, p, new Vector3(0.8f, 0.1f, 0.5f), guia);
+            g.transform.SetParent(decorado, true);
+        }
+
+        // ---------- El géiser ----------
+        var geiser = new GameObject("GeiserDestello").transform;
+        geiser.position = geiserPos;
+        for (int i = 0; i < 12; i++)
+        {
+            float a = i * 30f * Mathf.Deg2Rad;
+            float h = Random.Range(1f, 2.5f);
+            Primitiva(PrimitiveType.Cylinder, "Borde_" + i, geiser, new Vector3(Mathf.Cos(a) * 4f, h * 0.5f, Mathf.Sin(a) * 4f), new Vector3(1.6f, h, 1.6f), volcanica);
+        }
+        Primitiva(PrimitiveType.Cylinder, "Crater", geiser, new Vector3(0f, 0.05f, 0f), new Vector3(7f, 0.05f, 7f), crater);
+        Primitiva(PrimitiveType.Cylinder, "Brillo", geiser, new Vector3(0f, 0.12f, 0f), new Vector3(3f, 0.05f, 3f), lava);
+
+        var luz = new GameObject("LuzGeiser").AddComponent<Light>();
+        luz.transform.SetParent(geiser, false);
+        luz.transform.localPosition = new Vector3(0f, 3f, 0f);
+        luz.type = LightType.Point;
+        luz.color = new Color(1f, 0.55f, 0.2f);
+        luz.range = 30f;
+        luz.intensity = 4f;
+
+        var fx = geiser.gameObject.AddComponent<GeyserFX>();
+        fx.bubbleMaterial = burbuja;
+        fx.glow = luz;
+
+        // ---------- La isla ----------
+        var isla = Primitiva(PrimitiveType.Sphere, "Isla", null, islaCentro, Vector3.one * 50f, arenaIsla);
+        isla.AddComponent<SphereCollider>();
+        var islaSpawn = new GameObject("DespertarIsla").transform;
+        islaSpawn.position = new Vector3(50f, 14f, 56f);
+        islaSpawn.rotation = Quaternion.LookRotation(new Vector3(islaCentro.x, 0f, islaCentro.z) - new Vector3(50f, 0f, 56f));
+
+        var busqueda = new GameObject("PuntosBusqueda").transform;
+        var puntos = new Transform[3];
+        float[] angulos = { 200f, 235f, 270f };
+        for (int i = 0; i < 3; i++)
+        {
+            float a = angulos[i] * Mathf.Deg2Rad;
+            Vector3 p = new Vector3(islaCentro.x + Mathf.Cos(a) * 29f, 12f, islaCentro.z + Mathf.Sin(a) * 29f);
+            var m = Primitiva(PrimitiveType.Sphere, "Busca_" + (i + 1), busqueda, p, Vector3.one * 0.8f, marca);
+            // Haz de luz vertical para que se vea desde lejos a pesar de la niebla
+            var haz = Primitiva(PrimitiveType.Cylinder, "Haz", m.transform, new Vector3(0f, 5f, 0f), new Vector3(0.25f, 5f, 0.25f), marca);
+            haz.transform.localScale = new Vector3(0.25f, 5f / 0.8f, 0.25f); // compensa la escala de la esfera
+            puntos[i] = m.transform;
+        }
+
+        // Símbolos de Destello (círculo rojo, cuadrado verde, triángulo azul) en las rocas de la orilla
+        var simbolos = new GameObject("SimbolosDestello").transform;
+        Vector3 baseSim = new Vector3(islaCentro.x + Mathf.Cos(250f * Mathf.Deg2Rad) * 27f, 11f, islaCentro.z + Mathf.Sin(250f * Mathf.Deg2Rad) * 27f);
+        simbolos.position = baseSim;
+        simbolos.rotation = Quaternion.LookRotation(baseSim - new Vector3(islaCentro.x, baseSim.y, islaCentro.z));
+        Primitiva(PrimitiveType.Cylinder, "Circulo", simbolos, new Vector3(-2.2f, 1.2f, 0f), new Vector3(1.2f, 0.05f, 1.2f), simRojo)
+            .transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        Primitiva(PrimitiveType.Cube, "Cuadrado", simbolos, new Vector3(0f, 1.2f, 0f), new Vector3(1.1f, 1.1f, 0.1f), simVerde);
+        var tri = new GameObject("Triangulo").transform;
+        tri.SetParent(simbolos, false);
+        tri.localPosition = new Vector3(2.2f, 1.2f, 0f);
+        Primitiva(PrimitiveType.Cube, "Base", tri, new Vector3(0f, -0.45f, 0f), new Vector3(1.2f, 0.12f, 0.1f), simAzul);
+        Primitiva(PrimitiveType.Cube, "LadoIzq", tri, new Vector3(-0.3f, 0.07f, 0f), new Vector3(1.2f, 0.12f, 0.1f), simAzul).transform.localRotation = Quaternion.Euler(0f, 0f, 60f);
+        Primitiva(PrimitiveType.Cube, "LadoDer", tri, new Vector3(0.3f, 0.07f, 0f), new Vector3(1.2f, 0.12f, 0.1f), simAzul).transform.localRotation = Quaternion.Euler(0f, 0f, -60f);
+
+        // ---------- Octavio con el humano ----------
+        var octavio = CrearPulpo("Octavio", new Vector3(0f, 2f, 0f), pielOcta, blanco, negro, out var cuerpo, out var piel);
+        var rb = octavio.AddComponent<Rigidbody>();
+        rb.useGravity = false;
+        octavio.AddComponent<SphereCollider>().radius = 0.6f;
+        var swim = octavio.AddComponent<OctavioSwimController>();
+        SetRef(swim, "visual", cuerpo);
+        var skin = octavio.AddComponent<OctavioSkinColor>();
+        var so = new SerializedObject(skin);
+        var arr = so.FindProperty("skinRenderers");
+        arr.arraySize = piel.Count;
+        for (int i = 0; i < piel.Count; i++) arr.GetArrayElementAtIndex(i).objectReferenceValue = piel[i];
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        var humano = new GameObject("Humano");
+        var hc = humano.transform;
+        Primitiva(PrimitiveType.Capsule, "Torso",     hc, Vector3.zero,                   new Vector3(0.6f, 0.55f, 0.4f),  camiseta);
+        Primitiva(PrimitiveType.Sphere,  "Cabeza",    hc, new Vector3(0f, 0.85f, 0f),     Vector3.one * 0.45f,             pielHumano);
+        Primitiva(PrimitiveType.Capsule, "BrazoIzq",  hc, new Vector3(-0.42f, 0.1f, 0f),  new Vector3(0.18f, 0.45f, 0.18f), pielHumano);
+        Primitiva(PrimitiveType.Capsule, "BrazoDer",  hc, new Vector3(0.42f, 0.1f, 0f),   new Vector3(0.18f, 0.45f, 0.18f), pielHumano);
+        Primitiva(PrimitiveType.Capsule, "PiernaIzq", hc, new Vector3(-0.15f, -0.9f, 0f), new Vector3(0.22f, 0.5f, 0.22f),  pantalon);
+        Primitiva(PrimitiveType.Capsule, "PiernaDer", hc, new Vector3(0.15f, -0.9f, 0f),  new Vector3(0.22f, 0.5f, 0.22f),  pantalon);
+        hc.SetParent(octavio.transform, false);
+        hc.localPosition = new Vector3(0f, -1.2f, 0.8f);
+        hc.localRotation = Quaternion.Euler(80f, 0f, 0f);
+
+        // ---------- Cámara, luz y ambiente ----------
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            cam.transform.position = new Vector3(0f, 4f, -6f);
+            cam.transform.LookAt(octavio.transform);
+            cam.farClipPlane = 300f;
+            SetRef(cam.gameObject.AddComponent<ThirdPersonCamera>(), "target", octavio.transform);
+        }
+        var sol = Object.FindAnyObjectByType<Light>();
+        if (sol != null && sol != luz)
+        {
+            sol.transform.rotation = Quaternion.Euler(70f, 30f, 0f);
+            sol.color = new Color(0.5f, 0.6f, 0.8f);
+            sol.intensity = 0.45f;
+        }
+        var amb = new GameObject("Ambiente").AddComponent<UnderwaterAmbience>();
+        var sa = new SerializedObject(amb);
+        sa.FindProperty("waterColor").colorValue = new Color(0.02f, 0.10f, 0.16f);
+        sa.FindProperty("fogDensity").floatValue = 0.05f;
+        sa.FindProperty("ambientColor").colorValue = new Color(0.10f, 0.20f, 0.28f);
+        sa.ApplyModifiedPropertiesWithoutUndo();
+
+        // ---------- Controlador de la etapa ----------
+        var ctrl = new GameObject("Etapa2").AddComponent<Etapa2Controller>();
+        ctrl.geyser = geiser;
+        ctrl.fx = fx;
+        ctrl.humano = humano;
+        ctrl.islandSpawn = islaSpawn;
+        ctrl.searchPoints = puntos;
+        ctrl.symbols = simbolos.gameObject;
+
+        if (!AssetDatabase.IsValidFolder("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
+        EditorSceneManager.SaveScene(scene, ScenePath2);
+        AnadirABuild(ScenePath2);
+        AssetDatabase.SaveAssets();
+        Selection.activeGameObject = octavio;
+        Debug.Log("[Octavianos] Etapa 2 creada. Pulsa Play. En el editor, F9 te lleva directo al géiser.");
+    }
+
+    static Material MatEmisiva(string nombre, Color color, float intensidad)
+    {
+        var m = Mat(nombre, color);
+        m.EnableKeyword("_EMISSION");
+        m.SetColor("_EmissionColor", color * intensidad);
+        m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.RealtimeEmissive;
+        EditorUtility.SetDirty(m);
+        return m;
+    }
+
+    static float DistanciaAlSegmento(Vector3 p, Vector3 a, Vector3 b)
+    {
+        p.y = a.y = b.y = 0f;
+        Vector3 ab = b - a;
+        float t = Mathf.Clamp01(Vector3.Dot(p - a, ab) / ab.sqrMagnitude);
+        return Vector3.Distance(p, a + ab * t);
+    }
+
     // Primera conversación del juego. Cada línea lleva el color con el que "habla" la piel.
     static DialogueLine[] LineasEtapa1()
     {

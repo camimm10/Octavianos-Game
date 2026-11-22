@@ -148,6 +148,18 @@ public static class UIKit
         return kb != null && kb.escapeKey.wasPressedThisFrame;
     }
 
+    /// <summary>Devuelve 0..8 si se ha pulsado 1..9 (fila de arriba o teclado numérico), o -1.</summary>
+    public static int NumberPressed()
+    {
+        var kb = Keyboard.current;
+        if (kb == null) return -1;
+        Key[] top = { Key.Digit1, Key.Digit2, Key.Digit3, Key.Digit4, Key.Digit5, Key.Digit6, Key.Digit7, Key.Digit8, Key.Digit9 };
+        Key[] pad = { Key.Numpad1, Key.Numpad2, Key.Numpad3, Key.Numpad4, Key.Numpad5, Key.Numpad6, Key.Numpad7, Key.Numpad8, Key.Numpad9 };
+        for (int i = 0; i < 9; i++)
+            if (kb[top[i]].wasPressedThisFrame || kb[pad[i]].wasPressedThisFrame) return i;
+        return -1;
+    }
+
     /// <summary>Devuelve 0..3 si se ha pulsado 1..4 (fila de arriba o teclado numérico), o -1.</summary>
     public static int DigitPressed()
     {

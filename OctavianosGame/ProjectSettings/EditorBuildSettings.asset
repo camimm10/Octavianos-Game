@@ -11,6 +11,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Etapa1_Profundidades.unity
     guid: f79d75f5ad5fdb046858f6b9e9e75c37
+  - enabled: 1
+    path: Assets/Scenes/Etapa2_Geiser.unity
+    guid: 0733469efdc2d404bbb5a13c183dd87d
   m_configObjects:
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 443ab70e2038bc941ac765de3a32b273, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

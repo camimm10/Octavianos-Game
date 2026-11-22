@@ -1,18 +1,15 @@
-using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.UI;
 
 /// <summary>
 /// Etapa 1 · "El humano que cayó del cielo".
 /// Cuando Octavio y Brisa llegan a la entrada de Octópolis:
 ///  1. Un humano cae al mar delante de Octavio.
 ///  2. Brisa se asusta y huye; Octavio decide salvarle.
-///  3. El jugador elige su camino: MENTE, TENTÁCULOS o CORAZÓN.
-///  4. Si falla, puede reintentar o elegir otro camino.
-///  5. Al superarlo, Octavio decide llevarle al géiser DESTELLO (etapa 2).
-/// En el editor, F9 lanza la prueba directamente (para probarla sin hacer todo el recorrido).
+///  3. El jugador elige su camino: MENTE, TENTÁCULOS o CORAZÓN (con reintentos).
+///  4. Al superarlo, Octavio decide llevarle al géiser DESTELLO y se pasa a la etapa 2.
+/// En el editor, F9 lanza la prueba directamente (sin hacer el recorrido con Brisa).
 /// </summary>
 public class Etapa1Prueba : MonoBehaviour
 {
@@ -20,6 +17,7 @@ public class Etapa1Prueba : MonoBehaviour
     public Transform brisa;
     public GameObject humano;
     public float fallHeight = 14f;
+    public string nextScene = "Etapa2_Geiser";
 
     static readonly string[] PathNames = { "Mente", "Tentáculos", "Corazón" };
 
@@ -27,6 +25,13 @@ public class Etapa1Prueba : MonoBehaviour
     static readonly Color Verde = new Color(0.15f, 0.80f, 0.30f);
     static readonly Color Azul = new Color(0.15f, 0.40f, 0.95f);
     static readonly Color Amarillo = new Color(0.95f, 0.85f, 0.20f);
+
+    static readonly StageFlow.Card[] Cards =
+    {
+        new StageFlow.Card("MENTE", "Mente", "Las corrientes", "Gira las piezas para formar una corriente que lleve al humano.", StageFlow.Mente),
+        new StageFlow.Card("TENTÁCULOS", "Tentáculos", "El arrastre", "Nada esquivando rocas sin soltar al humano.", StageFlow.Tentaculos),
+        new StageFlow.Card("CORAZÓN", "Corazón", "Destellos de ayuda", "Repite los destellos de colores para que otros pulpos te ayuden.", StageFlow.Corazon),
+    };
 
     OctavioSwimController player;
     OctavioSkinColor playerSkin, brisaSkin;
@@ -106,14 +111,14 @@ public class Etapa1Prueba : MonoBehaviour
         }
 
         // 2. Diálogo y huida de Brisa
-        yield return Hablar(new[]
+        yield return StageFlow.Talk(new[]
         {
             new DialogueLine("Brisa",   "¡¿Qué es eso?! ¡Algo ha caído del cielo!", false, Rojo),
             new DialogueLine("Octavio", "Es… un humano. ¡Y está herido!", true, Amarillo),
             new DialogueLine("Brisa",   "¡Octavio, aléjate! Los humanos son peligrosos. ¡Vámonos a casa!", false, Rojo),
             new DialogueLine("Octavio", "Si lo dejamos aquí, se ahogará…", true, Azul),
             new DialogueLine("Brisa",   "¡Yo me voy! ¡Haz lo que quieras!", false, Rojo),
-        });
+        }, playerSkin, brisaSkin);
 
         if (brisa != null && brisa.gameObject.activeSelf)
         {
@@ -127,38 +132,19 @@ public class Etapa1Prueba : MonoBehaviour
             brisa.gameObject.SetActive(false);
         }
 
-        yield return Hablar(new[]
+        yield return StageFlow.Talk(new[]
         {
             new DialogueLine("Octavio", "No puedo dejarlo así. Tengo que llevarlo a algún sitio seguro.", true, Verde),
             new DialogueLine("Octavio", "Pero… ¿cómo lo hago?", true, Amarillo),
-        });
+        }, playerSkin);
 
-        // 3-4. Elegir camino y jugar (con reintentos)
-        int choice = -1;
-        while (true)
-        {
-            if (choice < 0)
-            {
-                yield return Elegir(c => choice = c);
-            }
-
-            bool? result = null;
-            Minigame game = CrearMinijuego(choice);
-            game.Begin(win => result = win);
-            while (result == null) yield return null;
-            Destroy(game);
-
-            if (result.Value) break;
-
-            int again = -1;
-            yield return Reintentar(PathNames[choice], r => again = r);
-            if (again == 1) choice = -1;
-        }
-
-        PlayerPrefs.SetString("Etapa1.Camino", PathNames[choice]);
+        // 3. Elegir camino y jugar (con reintentos)
+        int won = -1;
+        yield return StageFlow.RunTest("¿Cómo vas a salvar al humano?", Cards, CrearMinijuego, c => won = c);
+        PlayerPrefs.SetString("Etapa1.Camino", PathNames[won]);
         PlayerPrefs.Save();
 
-        // 5. Final de la etapa
+        // 4. Final de la etapa
         if (humano != null)
         {
             humano.transform.SetParent(player.transform, true);
@@ -166,15 +152,15 @@ public class Etapa1Prueba : MonoBehaviour
             humano.transform.localRotation = Quaternion.Euler(80f, 0f, 0f);
         }
 
-        yield return Hablar(new[]
+        yield return StageFlow.Talk(new[]
         {
             new DialogueLine("Octavio", "¡Lo he conseguido! Sigue respirando… pero muy débil.", true, Amarillo),
             new DialogueLine("Octavio", "No hay ninguna isla en cien kilómetros. No llegaremos a tiempo.", true, Rojo),
             new DialogueLine("Octavio", "Solo queda una opción… el géiser DESTELLO.", true, Azul),
-        });
+        }, playerSkin);
 
-        ui.SetObjective("Etapa 1 superada (" + PathNames[choice] + ") · Próximamente: el géiser DESTELLO");
-        player.CanMove = true;
+        ui.SetObjective("");
+        yield return StageFlow.OutroCard("Etapa 1 superada", "Camino elegido: " + PathNames[won], nextScene);
     }
 
     Minigame CrearMinijuego(int choice)
@@ -185,91 +171,5 @@ public class Etapa1Prueba : MonoBehaviour
             case 1: return gameObject.AddComponent<MinijuegoArrastre>();
             default: return gameObject.AddComponent<MinijuegoDestellos>();
         }
-    }
-
-    IEnumerator Hablar(DialogueLine[] lines)
-    {
-        bool done = false;
-        DialogueUI.Get().Play(lines, OnLine, () => done = true);
-        while (!done) yield return null;
-        if (playerSkin != null) playerSkin.ResetColor();
-        if (brisaSkin != null) brisaSkin.ResetColor();
-    }
-
-    void OnLine(DialogueLine line)
-    {
-        var skin = line.isPlayer ? playerSkin : brisaSkin;
-        if (skin != null && line.skinColor.a > 0f) skin.SetColor(line.skinColor);
-    }
-
-    // ---------- Pantalla de elección ----------
-
-    IEnumerator Elegir(Action<int> onChosen)
-    {
-        var canvas = UIKit.CreateCanvas("ElegirCamino", 150);
-        var root = UIKit.Panel(canvas.transform, "Fondo", Vector2.zero, Vector2.one, new Color(0.02f, 0.08f, 0.12f, 0.92f)).rectTransform;
-        UIKit.Label(root, "Titulo", new Vector2(0.1f, 0.8f), new Vector2(0.9f, 0.92f), "¿Cómo vas a salvar al humano?", 60, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-        UIKit.Label(root, "Ayuda", new Vector2(0.1f, 0.08f), new Vector2(0.9f, 0.14f), "Pulsa 1, 2 o 3 (o haz clic en una tarjeta)", 30, new Color(1f, 1f, 1f, 0.7f), TextAnchor.MiddleCenter, FontStyle.Italic);
-
-        var cards = new[]
-        {
-            Tarjeta(root, 0, "MENTE", "Las corrientes", "Gira las piezas para formar una corriente que lleve al humano.", new Color(0.45f, 0.85f, 1f)),
-            Tarjeta(root, 1, "TENTÁCULOS", "El arrastre", "Nada esquivando rocas sin soltar al humano.", new Color(1f, 0.6f, 0.4f)),
-            Tarjeta(root, 2, "CORAZÓN", "Destellos de ayuda", "Repite los destellos de colores para que otros pulpos te ayuden.", new Color(1f, 0.55f, 0.75f)),
-        };
-
-        yield return null;
-        int chosen = -1;
-        while (chosen < 0)
-        {
-            int d = UIKit.DigitPressed();
-            if (d >= 0 && d < 3) chosen = d;
-            for (int i = 0; i < 3 && chosen < 0; i++)
-                if (UIKit.Clicked(cards[i])) chosen = i;
-            yield return null;
-        }
-
-        Destroy(canvas.gameObject);
-        yield return null;
-        onChosen(chosen);
-    }
-
-    static RectTransform Tarjeta(RectTransform parent, int i, string nombre, string prueba, string texto, Color color)
-    {
-        float x0 = 0.06f + i * 0.31f;
-        var card = UIKit.Panel(parent, "Tarjeta_" + nombre, new Vector2(x0, 0.2f), new Vector2(x0 + 0.27f, 0.74f), new Color(0.06f, 0.16f, 0.22f)).rectTransform;
-        UIKit.Panel(card, "Franja", new Vector2(0f, 0.86f), Vector2.one, color);
-        UIKit.Label(card, "Tecla", new Vector2(0f, 0.86f), Vector2.one, (i + 1).ToString(), 44, new Color(0.02f, 0.08f, 0.12f), TextAnchor.MiddleCenter, FontStyle.Bold);
-        UIKit.Label(card, "Nombre", new Vector2(0.05f, 0.66f), new Vector2(0.95f, 0.82f), nombre, 52, color, TextAnchor.MiddleCenter, FontStyle.Bold);
-        UIKit.Label(card, "Prueba", new Vector2(0.05f, 0.54f), new Vector2(0.95f, 0.66f), prueba, 34, Color.white, TextAnchor.MiddleCenter, FontStyle.Italic);
-        UIKit.Label(card, "Texto", new Vector2(0.08f, 0.1f), new Vector2(0.92f, 0.5f), texto, 30, new Color(1f, 1f, 1f, 0.85f));
-        return card;
-    }
-
-    // ---------- Pantalla de reintento ----------
-
-    IEnumerator Reintentar(string camino, Action<int> onChosen)
-    {
-        var canvas = UIKit.CreateCanvas("Reintentar", 150);
-        var root = UIKit.Panel(canvas.transform, "Fondo", Vector2.zero, Vector2.one, new Color(0.02f, 0.08f, 0.12f, 0.92f)).rectTransform;
-        UIKit.Label(root, "Titulo", new Vector2(0.1f, 0.62f), new Vector2(0.9f, 0.76f), "¡No te rindas, Octavio!", 60, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-        var retry = UIKit.Panel(root, "Reintentar", new Vector2(0.2f, 0.35f), new Vector2(0.48f, 0.52f), new Color(0.15f, 0.45f, 0.3f)).rectTransform;
-        UIKit.Label(retry, "Texto", Vector2.zero, Vector2.one, "R · Reintentar " + camino, 36, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-        var other = UIKit.Panel(root, "Otro", new Vector2(0.52f, 0.35f), new Vector2(0.8f, 0.52f), new Color(0.2f, 0.3f, 0.5f)).rectTransform;
-        UIKit.Label(other, "Texto", Vector2.zero, Vector2.one, "C · Elegir otro camino", 36, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
-
-        yield return null;
-        int r = -1;
-        var kb = Keyboard.current;
-        while (r < 0)
-        {
-            if ((kb != null && kb.rKey.wasPressedThisFrame) || UIKit.Clicked(retry)) r = 0;
-            else if ((kb != null && kb.cKey.wasPressedThisFrame) || UIKit.Clicked(other)) r = 1;
-            yield return null;
-        }
-
-        Destroy(canvas.gameObject);
-        yield return null;
-        onChosen(r);
     }
 }
