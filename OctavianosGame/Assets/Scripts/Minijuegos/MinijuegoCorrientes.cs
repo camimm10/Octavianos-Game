@@ -20,6 +20,8 @@ public class MinijuegoCorrientes : Minigame
     static readonly Color Unlit = new Color(0.40f, 0.46f, 0.52f);
 
     int[,] mask;
+    int[,] solution;  // orientación correcta de las piezas del camino
+    bool[,] onPath;
     RectTransform[,] cells;
     Image[,] centers;
     Image[,,] arms; // [x, y, dir 0..3]  (N, E, S, W)
@@ -69,9 +71,31 @@ public class MinijuegoCorrientes : Minigame
 
     protected override IEnumerator Play()
     {
+        float autoTimer = 0.5f;
         while (true)
         {
             if (UIKit.EscapePressed()) { yield return End(false, "Has abandonado las corrientes…"); yield break; }
+
+            // Piloto automático (solo editor, F11): gira, de una en una, las piezas del camino mal orientadas
+            if (Autopilot && (autoTimer -= Time.deltaTime) <= 0f)
+            {
+                autoTimer = 0.15f;
+                bool rotated = false;
+                for (int x = 0; x < width && !rotated; x++)
+                    for (int y = 0; y < height && !rotated; y++)
+                        if (onPath[x, y] && mask[x, y] != solution[x, y])
+                        {
+                            mask[x, y] = RotCW(mask[x, y]);
+                            moves++;
+                            rotated = true;
+                        }
+                if (Refresh())
+                {
+                    yield return new WaitForSeconds(0.6f);
+                    yield return End(true, "¡La corriente se lleva al humano!");
+                    yield break;
+                }
+            }
 
             for (int x = 0; x < width; x++)
                 for (int y = 0; y < height; y++)
@@ -121,6 +145,9 @@ public class MinijuegoCorrientes : Minigame
             mask[c.x, c.y] = DirMask(prev - c) | DirMask(next - c);
             onPath[c.x, c.y] = true;
         }
+
+        solution = (int[,])mask.Clone();
+        this.onPath = onPath;
 
         // Resto de casillas: piezas de relleno
         for (int x = 0; x < width; x++)

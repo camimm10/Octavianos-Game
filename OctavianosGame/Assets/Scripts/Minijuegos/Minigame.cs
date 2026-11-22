@@ -70,17 +70,34 @@ public abstract class Minigame : MonoBehaviour
         cb?.Invoke(win);
     }
 
+    /// <summary>Solo en el editor (F11): el minijuego se juega solo, con sus propias reglas, para comprobar que se puede ganar.</summary>
+    protected bool Autopilot { get; private set; }
+
 #if UNITY_EDITOR
-    // Atajo SOLO para el editor: F10 da la prueba por superada (para probar la historia rápido)
+    // Atajos SOLO para el editor:
+    //  F10: da la prueba por superada (para probar la historia rápido)
+    //  F11: activa/desactiva el piloto automático
     bool skipping;
+    Text autopilotLabel;
     void Update()
     {
         var kb = UnityEngine.InputSystem.Keyboard.current;
-        if (!skipping && onEnd != null && kb != null && kb.f10Key.wasPressedThisFrame)
+        if (kb == null || onEnd == null) return;
+
+        if (!skipping && kb.f10Key.wasPressedThisFrame)
         {
             skipping = true;
             StopAllCoroutines();
             StartCoroutine(End(true, "Prueba superada con F10 (solo en el editor)"));
+        }
+
+        if (kb.f11Key.wasPressedThisFrame && root != null)
+        {
+            Autopilot = !Autopilot;
+            if (autopilotLabel == null)
+                autopilotLabel = UIKit.Label(root, "Piloto", new Vector2(0.01f, 0.01f), new Vector2(0.4f, 0.06f), "", 26,
+                                             new Color(1f, 0.9f, 0.3f), TextAnchor.LowerLeft, FontStyle.Bold);
+            autopilotLabel.text = Autopilot ? "PILOTO AUTOMÁTICO (F11)" : "";
         }
     }
 #endif

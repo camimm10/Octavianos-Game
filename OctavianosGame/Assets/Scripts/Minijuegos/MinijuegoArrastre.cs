@@ -68,7 +68,8 @@ public class MinijuegoArrastre : Minigame
             t += dt;
 
             if (UIKit.EscapePressed()) { yield return End(false, "Has soltado al humano…"); yield break; }
-            if (UpPressed()) vy = impulse;
+            bool up = Autopilot ? AutoUp(y, vy, dt) : UpPressed();
+            if (up) vy = impulse;
 
             vy += gravity * dt;
             y += vy * dt;
@@ -130,6 +131,30 @@ public class MinijuegoArrastre : Minigame
         float x = W / 2f + 80f;
         obstacles.Add(UIKit.PixelImage(area, "RocaArriba", new Vector2(x, H / 2f - topH / 2f), new Vector2(110f, topH), Roca));
         obstacles.Add(UIKit.PixelImage(area, "RocaAbajo", new Vector2(x, -H / 2f + botH / 2f), new Vector2(110f, botH), Roca));
+    }
+
+    // Piloto automático (solo editor, F11): apunta al centro del hueco de la siguiente roca
+    float autoCooldown;
+
+    bool AutoUp(float y, float vy, float dt)
+    {
+        autoCooldown -= dt;
+        float target = -40f;
+        float bestX = float.MaxValue;
+        foreach (var o in obstacles)
+        {
+            if (o.name != "RocaAbajo") continue;
+            float x = o.anchoredPosition.x;
+            if (x + 55f < PlayerX - 40f || x > bestX) continue; // ya pasada, o hay otra más cerca
+            bestX = x;
+            target = o.anchoredPosition.y + o.sizeDelta.y / 2f + gap / 2f;
+        }
+        if (autoCooldown <= 0f && y < target - 10f && vy < 100f)
+        {
+            autoCooldown = 0.12f;
+            return true;
+        }
+        return false;
     }
 
     static bool UpPressed()

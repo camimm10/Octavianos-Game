@@ -73,10 +73,16 @@ public class MinijuegoDestellos : Minigame
                 status.text = "Ahora tú: repite los destellos";
                 int index = 0;
                 bool failed = false;
+                float autoTimer = 0.5f;
                 while (index < seq.Count)
                 {
                     if (UIKit.EscapePressed()) { yield return End(false, "Te has ido sin pedir ayuda…"); yield break; }
                     int pressed = ReadPad();
+                    if (Autopilot) // solo editor (F11): repite la secuencia correcta
+                    {
+                        autoTimer -= Time.deltaTime;
+                        if (autoTimer <= 0f) { pressed = seq[index]; autoTimer = 0.35f; }
+                    }
                     if (pressed >= 0)
                     {
                         StartCoroutine(Flash(pressed, 0.2f));
