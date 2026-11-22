@@ -149,6 +149,28 @@ public static class EtapaBuilder
         var dialogo = amigo.AddComponent<NPCDialogue>();
         dialogo.lines = LineasEtapa1();
         dialogo.guideAfter = guia;
+        guia.objectiveArrived = ""; // al llegar empieza la prueba
+
+        // ---------- El humano (cae al mar al llegar a Octópolis) ----------
+        var pielHumano = Mat("PielHumano", new Color(0.95f, 0.78f, 0.62f));
+        var camiseta   = Mat("Camiseta",   new Color(0.92f, 0.92f, 0.96f));
+        var pantalon   = Mat("Pantalon",   new Color(0.20f, 0.25f, 0.45f));
+        var humano = new GameObject("Humano");
+        var hc = humano.transform;
+        Primitiva(PrimitiveType.Capsule, "Torso",     hc, Vector3.zero,                    new Vector3(0.6f, 0.55f, 0.4f),  camiseta);
+        Primitiva(PrimitiveType.Sphere,  "Cabeza",    hc, new Vector3(0f, 0.85f, 0f),      Vector3.one * 0.45f,             pielHumano);
+        Primitiva(PrimitiveType.Capsule, "BrazoIzq",  hc, new Vector3(-0.42f, 0.1f, 0f),   new Vector3(0.18f, 0.45f, 0.18f), pielHumano);
+        Primitiva(PrimitiveType.Capsule, "BrazoDer",  hc, new Vector3(0.42f, 0.1f, 0f),    new Vector3(0.18f, 0.45f, 0.18f), pielHumano);
+        Primitiva(PrimitiveType.Capsule, "PiernaIzq", hc, new Vector3(-0.15f, -0.9f, 0f),  new Vector3(0.22f, 0.5f, 0.22f),  pantalon);
+        Primitiva(PrimitiveType.Capsule, "PiernaDer", hc, new Vector3(0.15f, -0.9f, 0f),   new Vector3(0.22f, 0.5f, 0.22f),  pantalon);
+        hc.position = new Vector3(22f, 12f, 40f);
+        humano.SetActive(false);
+
+        // ---------- Prueba de la etapa 1 (3 caminos) ----------
+        var prueba = new GameObject("PruebaEtapa1").AddComponent<Etapa1Prueba>();
+        prueba.guide = guia;
+        prueba.brisa = amigo.transform;
+        prueba.humano = humano;
 
         // ---------- Cámara ----------
         var cam = Camera.main;

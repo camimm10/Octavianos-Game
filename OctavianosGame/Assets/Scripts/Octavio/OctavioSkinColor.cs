@@ -31,8 +31,11 @@ public class OctavioSkinColor : MonoBehaviour
 
     public Color TargetColor => target;
 
+    OctavioSwimController swim;
+
     void Awake()
     {
+        swim = GetComponent<OctavioSwimController>();
         block = new MaterialPropertyBlock();
         if (skinRenderers == null || skinRenderers.Length == 0)
             skinRenderers = GetComponentsInChildren<Renderer>();
@@ -43,7 +46,9 @@ public class OctavioSkinColor : MonoBehaviour
 
     void Update()
     {
-        var kb = readKeyboard ? Keyboard.current : null;
+        // Solo lee el teclado si Octavio puede moverse (no durante diálogos ni pruebas)
+        bool canUseKeys = readKeyboard && (swim == null || swim.CanMove);
+        var kb = canUseKeys ? Keyboard.current : null;
         if (kb != null)
         {
             if (kb.digit1Key.wasPressedThisFrame) SetColor(rojo);
