@@ -36,6 +36,13 @@ public class ThirdPersonCamera : MonoBehaviour
     }
 
     /// <summary>Coloca la cámara detrás del objetivo mirando en esa dirección (para escenas).</summary>
+    /// <summary>Distancia de la cámara a Octavio (por ejemplo, para alejarla en una escena importante).</summary>
+    public float Distance
+    {
+        get => distance;
+        set => distance = Mathf.Clamp(value, minDistance, Mathf.Max(maxDistance, value));
+    }
+
     public void LookTowards(Vector3 direction, float newPitch = 12f)
     {
         direction.y = 0f;

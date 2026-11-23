@@ -153,7 +153,7 @@ public class Etapa3Controller : MonoBehaviour
             new DialogueLine("Narrador", "Octavio se había convertido en el primer Octaviano.", false, Color.clear),
         });
 
-        yield return StageFlow.OutroCard("Etapa 3 superada", "Continuará… Etapa 4: El nacimiento de Octópolis", nextScene);
+        yield return StageFlow.OutroCard("Etapa 3 superada", "Etapa 4: El nacimiento de Octópolis", string.IsNullOrEmpty(nextScene) ? "Etapa4_Octopolis" : nextScene);
     }
 
     /// <summary>Espera a que Octavio llegue cerca de un sitio. En el editor, F9 lo lleva directamente.</summary>
