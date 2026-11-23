@@ -25,7 +25,7 @@ public abstract class Minigame : MonoBehaviour
     {
         this.onEnd = onEnd;
         canvas = UIKit.CreateCanvas(GetType().Name, 200);
-        root = UIKit.Panel(canvas.transform, "Fondo", Vector2.zero, Vector2.one, new Color(0.02f, 0.09f, 0.13f, 0.97f)).rectTransform;
+        root = UIKit.Panel(canvas.transform, "Fondo", Vector2.zero, Vector2.one, new Color(0.02f, 0.09f, 0.13f, 1f)).rectTransform;
         StartCoroutine(Flow());
     }
 

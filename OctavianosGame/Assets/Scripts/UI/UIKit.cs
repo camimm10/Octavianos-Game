@@ -9,7 +9,7 @@ using UnityEngine.UI;
 public static class UIKit
 {
     static Font font;
-    static Sprite circle;
+    static Sprite circle, triangle;
 
     public static Font Font => font != null ? font : (font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
 
@@ -31,6 +31,29 @@ public static class UIKit
             tex.Apply();
             circle = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
             return circle;
+        }
+    }
+
+    /// <summary>Sprite triangular (la forma ▲ de las linternas de Destello).</summary>
+    public static Sprite Triangle
+    {
+        get
+        {
+            if (triangle != null) return triangle;
+            const int s = 128;
+            var tex = new Texture2D(s, s, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            for (int y = 0; y < s; y++)
+                for (int x = 0; x < s; x++)
+                {
+                    // triángulo con la base abajo: a la altura y, el ancho va de lado a lado (abajo) hasta 0 (arriba)
+                    float py = y + 0.5f, px = x + 0.5f;
+                    float half = (s - py) * 0.5f;
+                    float d = Mathf.Min(half - Mathf.Abs(px - s / 2f), py - 4f);
+                    tex.SetPixel(x, y, new Color(1f, 1f, 1f, Mathf.Clamp01(d)));
+                }
+            tex.Apply();
+            triangle = Sprite.Create(tex, new Rect(0, 0, s, s), new Vector2(0.5f, 0.5f), 100f);
+            return triangle;
         }
     }
 

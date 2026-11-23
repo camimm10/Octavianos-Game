@@ -392,6 +392,7 @@ public static class EtapaBuilder
         ctrl.islandSpawn = islaSpawn;
         ctrl.searchPoints = puntos;
         ctrl.symbols = simbolos.gameObject;
+        ctrl.nextScene = "Etapa3_Casa";
 
         if (!AssetDatabase.IsValidFolder("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
         EditorSceneManager.SaveScene(scene, ScenePath2);
@@ -399,6 +400,265 @@ public static class EtapaBuilder
         AssetDatabase.SaveAssets();
         Selection.activeGameObject = octavio;
         Debug.Log("[Octavianos] Etapa 2 creada. Pulsa Play. En el editor, F9 te lleva directo al géiser.");
+    }
+
+    // =====================================================================
+    //  ETAPA 3 · ALGO HA CAMBIADO (la colonia)
+    // =====================================================================
+
+    const string ScenePath3 = "Assets/Scenes/Etapa3_Casa.unity";
+
+    [MenuItem("Octavianos/Crear Etapa 3 (Casa)")]
+    public static void CrearEtapa3()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath3) != null &&
+            !EditorUtility.DisplayDialog("Etapa 3",
+                "La escena Etapa3_Casa ya existe. ¿Quieres rehacerla desde cero?", "Sí, rehacer", "Cancelar"))
+            return;
+
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
+
+        // ---------- Materiales ----------
+        var arenaClara = Mat("ArenaClara",   new Color(0.86f, 0.80f, 0.62f));
+        var roca       = Mat("Roca",         new Color(0.35f, 0.37f, 0.40f));
+        var rocaCasa   = Mat("RocaCasa",     new Color(0.55f, 0.52f, 0.48f));
+        var puertaMat  = Mat("PuertaPiedra", new Color(0.42f, 0.40f, 0.38f));
+        var oscuro     = Mat("Hueco",        new Color(0.03f, 0.04f, 0.05f));
+        var alga       = Mat("Alga",         new Color(0.10f, 0.45f, 0.25f));
+        Material[] corales =
+        {
+            Mat("CoralRosa",     new Color(1f, 0.45f, 0.65f)),
+            Mat("CoralNaranja",  new Color(1f, 0.55f, 0.2f)),
+            Mat("CoralAmarillo", new Color(1f, 0.85f, 0.3f)),
+            Mat("CoralMorado",   new Color(0.6f, 0.4f, 0.9f)),
+            Mat("CoralTurquesa", new Color(0.25f, 0.85f, 0.8f)),
+        };
+        var algasGuardadas = MatEmisiva("AlgasDespensa", new Color(0.3f, 0.95f, 0.4f), 1.2f);
+        var marca    = MatEmisiva("MarcaBusqueda", new Color(0.6f, 0.95f, 1f), 1.2f);
+        var simRojo  = MatEmisiva("SimboloRojo",  new Color(0.9f, 0.15f, 0.15f), 2f);
+        var simVerde = MatEmisiva("SimboloVerde", new Color(0.15f, 0.85f, 0.3f), 2f);
+        var simAzul  = MatEmisiva("SimboloAzul",  new Color(0.1f, 0.3f, 1f), 2.2f);
+        var pielOcta = Mat("PielOctavio", new Color(0.85f, 0.45f, 0.35f));
+        var blanco   = Mat("OjoBlanco", Color.white);
+        var negro    = Mat("OjoPupila", new Color(0.05f, 0.05f, 0.05f));
+
+        // ---------- Fondo ----------
+        var suelo = GameObject.CreatePrimitive(PrimitiveType.Plane);
+        suelo.name = "FondoColonia";
+        suelo.transform.localScale = new Vector3(12f, 1f, 12f); // 120 x 120 m
+        suelo.GetComponent<Renderer>().sharedMaterial = arenaClara;
+
+        Vector3 plaza = new Vector3(-5f, 0f, 32f);
+        Vector3 despCentro = new Vector3(18f, 0f, 40f);
+        Vector3 dirPuerta = plaza - despCentro; dirPuerta.y = 0f; dirPuerta.Normalize(); // la puerta mira a la plaza
+        Vector3 lateral = Vector3.Cross(Vector3.up, dirPuerta);
+        Vector3 frentePuerta = despCentro + dirPuerta * 9f;
+
+        // ---------- Casas de roca (cúpulas) ----------
+        var colonia = new GameObject("Colonia").transform;
+        Vector3[] casas = { new Vector3(-8f, 0f, 20f), new Vector3(-18f, 0f, 30f), new Vector3(-12f, 0f, 44f), new Vector3(0f, 0f, 52f), new Vector3(-22f, 0f, 14f) };
+        for (int i = 0; i < casas.Length; i++)
+        {
+            var casa = new GameObject(i == 0 ? "CasaOctavio" : "Casa_" + i).transform;
+            casa.SetParent(colonia);
+            casa.position = casas[i];
+            Vector3 mira = plaza - casas[i]; mira.y = 0f;
+            casa.rotation = Quaternion.LookRotation(mira.normalized);
+            var cupula = Primitiva(PrimitiveType.Sphere, "Cupula", casa, Vector3.zero, new Vector3(6f, 5f, 6f), rocaCasa);
+            cupula.AddComponent<SphereCollider>();
+            Primitiva(PrimitiveType.Cylinder, "Entrada", casa, new Vector3(0f, 0.9f, 2.85f), new Vector3(1.4f, 0.05f, 1.6f), oscuro)
+                .transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+            for (int k = 0; k < 3; k++) // coral de adorno junto a cada casa
+            {
+                float a = (k * 120f + i * 37f) * Mathf.Deg2Rad;
+                Primitiva(PrimitiveType.Sphere, "Adorno_" + k, casa, new Vector3(Mathf.Cos(a) * 3.6f, 0.4f, Mathf.Sin(a) * 3.6f),
+                          Vector3.one * 0.9f, corales[(i + k) % corales.Length]);
+            }
+        }
+
+        // Gran coral en la plaza
+        var granCoral = new GameObject("GranCoral").transform;
+        granCoral.SetParent(colonia);
+        granCoral.position = plaza;
+        for (int i = 0; i < 7; i++)
+        {
+            float a = i * 51f * Mathf.Deg2Rad;
+            float h = 1.5f + (i % 3) * 0.8f;
+            var rama = Primitiva(PrimitiveType.Capsule, "Rama_" + i, granCoral, new Vector3(Mathf.Cos(a) * 0.7f, h, Mathf.Sin(a) * 0.7f),
+                                 new Vector3(0.5f, h, 0.5f), corales[i % corales.Length]);
+            rama.transform.localRotation = Quaternion.Euler(Mathf.Sin(a) * 20f, 0f, -Mathf.Cos(a) * 20f);
+        }
+
+        // ---------- Decorado ----------
+        var decorado = new GameObject("Decorado").transform;
+        Random.InitState(33);
+        for (int i = 0; i < 70; i++)
+        {
+            Vector3 p = PuntoLejosDelCentro(4f, 55f);
+            bool libre = (p - despCentro).magnitude > 9f && DistanciaAlSegmento(p, Vector3.zero, new Vector3(-5f, 0f, 17f)) > 3f
+                      && DistanciaAlSegmento(p, new Vector3(-5f, 0f, 17f), frentePuerta) > 3f;
+            foreach (var c in casas) if ((p - c).magnitude < 5f) libre = false;
+            if (!libre) continue;
+            if (i % 3 == 0)
+            {
+                var a = Primitiva(PrimitiveType.Capsule, "Alga_" + i, decorado, Vector3.zero, Vector3.one, alga);
+                float alto = Random.Range(0.8f, 2.5f);
+                a.transform.position = new Vector3(p.x, alto, p.z);
+                a.transform.localScale = new Vector3(0.15f, alto, 0.15f);
+            }
+            else
+            {
+                var tipo = Random.value < 0.5f ? PrimitiveType.Sphere : PrimitiveType.Cylinder;
+                var coral = Primitiva(tipo, "Coral_" + i, decorado, Vector3.zero, Vector3.one, corales[Random.Range(0, corales.Length)]);
+                float t = Random.Range(0.5f, 1.6f);
+                coral.transform.position = new Vector3(p.x, t * 0.5f, p.z);
+                coral.transform.localScale = tipo == PrimitiveType.Sphere ? Vector3.one * t : new Vector3(t * 0.4f, t, t * 0.4f);
+            }
+        }
+        for (int i = 0; i < 14; i++) // rocas grandes en las afueras
+        {
+            var r = GameObject.CreatePrimitive(Random.value < 0.6f ? PrimitiveType.Sphere : PrimitiveType.Cube);
+            r.name = "Roca_" + i;
+            r.transform.SetParent(decorado);
+            r.transform.position = PuntoLejosDelCentro(42f, 58f) + new Vector3(0f, 0f, 20f);
+            r.transform.localScale = new Vector3(Random.Range(2f, 6f), Random.Range(1.5f, 4f), Random.Range(2f, 6f));
+            r.transform.rotation = Quaternion.Euler(0f, Random.Range(0f, 360f), 0f);
+            r.GetComponent<Renderer>().sharedMaterial = roca;
+        }
+
+        // ---------- La despensa ----------
+        var despensa = new GameObject("Despensa").transform;
+        despensa.position = despCentro;
+        despensa.rotation = Quaternion.LookRotation(dirPuerta);
+        var rocaGrande = Primitiva(PrimitiveType.Sphere, "RocaDespensa", despensa, new Vector3(0f, 1f, 0f), new Vector3(11f, 9f, 11f), roca);
+        rocaGrande.AddComponent<SphereCollider>();
+        Primitiva(PrimitiveType.Cube, "Hueco", despensa, new Vector3(0f, 2f, 5.35f), new Vector3(2.8f, 3.8f, 0.3f), oscuro);
+        Primitiva(PrimitiveType.Cube, "AlgasDentro", despensa, new Vector3(0f, 1f, 5.52f), new Vector3(2.4f, 1.6f, 0.2f), algasGuardadas);
+        var puerta = Primitiva(PrimitiveType.Cube, "PuertaDePiedra", despensa, new Vector3(0f, 2.1f, 5.85f), new Vector3(3.4f, 4.2f, 0.6f), puertaMat);
+        puerta.AddComponent<BoxCollider>();
+
+        // Símbolos de Destello sobre la puerta
+        var simbolos = new GameObject("SimbolosPuerta").transform;
+        simbolos.SetParent(despensa, false);
+        simbolos.localPosition = new Vector3(0f, 4.9f, 5.6f);
+        Primitiva(PrimitiveType.Cylinder, "Circulo", simbolos, new Vector3(1.5f, 0f, 0f), new Vector3(0.8f, 0.05f, 0.8f), simRojo)
+            .transform.localRotation = Quaternion.Euler(90f, 0f, 0f);
+        Primitiva(PrimitiveType.Cube, "Cuadrado", simbolos, Vector3.zero, new Vector3(0.75f, 0.75f, 0.1f), simVerde);
+        var tri = new GameObject("Triangulo").transform;
+        tri.SetParent(simbolos, false);
+        tri.localPosition = new Vector3(-1.5f, 0f, 0f); // visto de frente: ● ■ ▲ (el eje X local queda invertido)
+        tri.localScale = Vector3.one * 0.7f;
+        Primitiva(PrimitiveType.Cube, "Base", tri, new Vector3(0f, -0.45f, 0f), new Vector3(1.2f, 0.2f, 0.12f), simAzul);
+        Primitiva(PrimitiveType.Cube, "LadoIzq", tri, new Vector3(-0.3f, 0.07f, 0f), new Vector3(1.2f, 0.2f, 0.12f), simAzul).transform.localRotation = Quaternion.Euler(0f, 0f, 60f);
+        Primitiva(PrimitiveType.Cube, "LadoDer", tri, new Vector3(0.3f, 0.07f, 0f), new Vector3(1.2f, 0.2f, 0.12f), simAzul).transform.localRotation = Quaternion.Euler(0f, 0f, -60f);
+
+        var luzDespensa = new GameObject("LuzDespensa").AddComponent<Light>();
+        luzDespensa.transform.SetParent(despensa, false);
+        luzDespensa.transform.localPosition = new Vector3(0f, 5f, 7f);
+        luzDespensa.type = LightType.Point;
+        luzDespensa.color = new Color(0.7f, 0.9f, 1f);
+        luzDespensa.range = 12f;
+        luzDespensa.intensity = 2f;
+
+        // Punto delante de la puerta y haz de luz que lo señala
+        var frente = new GameObject("FrenteDespensa").transform;
+        frente.position = frentePuerta + Vector3.up * 1.5f;
+        var haz = Primitiva(PrimitiveType.Cylinder, "HazDespensa", null, frentePuerta + Vector3.up * 6f, new Vector3(0.35f, 6f, 0.35f), marca);
+
+        // ---------- Personajes ----------
+        GameObject Npc(string nombre, Vector3 pos, Color color, float escala, Vector3 mirarA)
+        {
+            var piel = Mat("Piel" + nombre.Replace(" ", ""), color);
+            var go = CrearPulpo(nombre, pos, piel, blanco, negro, out var cuerpoNpc, out var pielNpc);
+            go.transform.localScale = Vector3.one * escala;
+            Vector3 m = mirarA - pos; m.y = 0f;
+            if (m.sqrMagnitude > 0.01f) go.transform.rotation = Quaternion.LookRotation(m);
+            var s = go.AddComponent<OctavioSkinColor>();
+            var so2 = new SerializedObject(s);
+            so2.FindProperty("readKeyboard").boolValue = false;
+            so2.FindProperty("neutral").colorValue = color;
+            var arr2 = so2.FindProperty("skinRenderers");
+            arr2.arraySize = pielNpc.Count;
+            for (int i = 0; i < pielNpc.Count; i++) arr2.GetArrayElementAtIndex(i).objectReferenceValue = pielNpc[i];
+            so2.ApplyModifiedPropertiesWithoutUndo();
+            go.AddComponent<NPCIdle>().visual = cuerpoNpc;
+            return go;
+        }
+
+        Vector3 inicio = new Vector3(0f, 2f, 0f);
+        var mama   = Npc("Mamá",  new Vector3(-5f, 1.5f, 17f), new Color(0.95f, 0.55f, 0.7f), 1.1f, inicio);
+        var brisa  = Npc("Brisa", new Vector3(-2f, 1.5f, 18.5f), new Color(0.55f, 0.35f, 0.75f), 1f, inicio);
+        var abuelo = Npc("Abuelo Coral", despCentro + dirPuerta * 7f + lateral * 2.5f + Vector3.up * 1.8f,
+                         new Color(0.55f, 0.62f, 0.72f), 1.35f, frentePuerta + dirPuerta * 5f);
+        Color[] coloresVecinos = { new Color(1f, 0.6f, 0.25f), new Color(0.2f, 0.75f, 0.7f), new Color(0.95f, 0.8f, 0.3f), new Color(0.4f, 0.7f, 0.35f) };
+        string[] nombresVecinos = { "Vecina", "Vecino", "Vecina_2", "Vecino_2" };
+        float[] lados = { -6.5f, 6.5f, -9.5f, 9.5f }; // a los lados, para no tapar la cámara
+        var vecinos = new Transform[4];
+        for (int i = 0; i < 4; i++)
+            vecinos[i] = Npc(nombresVecinos[i], despCentro + dirPuerta * (7.5f + (i / 2) * 2f) + lateral * lados[i] + Vector3.up * 1.4f,
+                             coloresVecinos[i], 0.95f, despCentro + dirPuerta * 5f).transform;
+
+        var puntoMama = new GameObject("PuntoMamaDespensa").transform;
+        puntoMama.position = frentePuerta + lateral * 3f + dirPuerta * 1.5f + Vector3.up * 1.5f;
+        var puntoBrisa = new GameObject("PuntoBrisaDespensa").transform;
+        puntoBrisa.position = frentePuerta - lateral * 3f + dirPuerta * 1.5f + Vector3.up * 1.5f;
+
+        // ---------- Octavio ----------
+        var octavio = CrearPulpo("Octavio", inicio, pielOcta, blanco, negro, out var cuerpo, out var pielO);
+        var rb = octavio.AddComponent<Rigidbody>();
+        rb.useGravity = false;
+        octavio.AddComponent<SphereCollider>().radius = 0.6f;
+        var swim = octavio.AddComponent<OctavioSwimController>();
+        SetRef(swim, "visual", cuerpo);
+        var skin = octavio.AddComponent<OctavioSkinColor>();
+        var so = new SerializedObject(skin);
+        var arr = so.FindProperty("skinRenderers");
+        arr.arraySize = pielO.Count;
+        for (int i = 0; i < pielO.Count; i++) arr.GetArrayElementAtIndex(i).objectReferenceValue = pielO[i];
+        so.ApplyModifiedPropertiesWithoutUndo();
+
+        // ---------- Cámara, luz y ambiente (más claro: estamos en casa) ----------
+        var cam = Camera.main;
+        if (cam != null)
+        {
+            cam.transform.position = new Vector3(0f, 4f, -6f);
+            cam.transform.LookAt(octavio.transform);
+            cam.farClipPlane = 250f;
+            SetRef(cam.gameObject.AddComponent<ThirdPersonCamera>(), "target", octavio.transform);
+        }
+        var sol = Object.FindAnyObjectByType<Light>();
+        if (sol != null && sol != luzDespensa)
+        {
+            sol.transform.rotation = Quaternion.Euler(65f, 20f, 0f);
+            sol.color = new Color(0.85f, 0.95f, 1f);
+            sol.intensity = 1.1f;
+        }
+        var amb = new GameObject("Ambiente").AddComponent<UnderwaterAmbience>();
+        var sa = new SerializedObject(amb);
+        sa.FindProperty("waterColor").colorValue = new Color(0.07f, 0.32f, 0.42f);
+        sa.FindProperty("fogDensity").floatValue = 0.022f;
+        sa.FindProperty("ambientColor").colorValue = new Color(0.35f, 0.45f, 0.5f);
+        sa.ApplyModifiedPropertiesWithoutUndo();
+
+        // ---------- Controlador de la etapa ----------
+        var ctrl = new GameObject("Etapa3").AddComponent<Etapa3Controller>();
+        ctrl.mama = mama.transform;
+        ctrl.brisa = brisa.transform;
+        ctrl.abuelo = abuelo.transform;
+        ctrl.vecinos = vecinos;
+        ctrl.despensa = frente;
+        ctrl.puerta = puerta.transform;
+        ctrl.marcaDespensa = haz;
+        ctrl.puntoMama = puntoMama;
+        ctrl.puntoBrisa = puntoBrisa;
+
+        if (!AssetDatabase.IsValidFolder("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
+        EditorSceneManager.SaveScene(scene, ScenePath3);
+        AnadirABuild(ScenePath3);
+        AssetDatabase.SaveAssets();
+        Selection.activeGameObject = octavio;
+        Debug.Log("[Octavianos] Etapa 3 creada. Pulsa Play. En el editor, F9 se salta los recorridos.");
     }
 
     static Material MatEmisiva(string nombre, Color color, float intensidad)

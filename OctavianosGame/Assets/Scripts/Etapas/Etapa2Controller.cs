@@ -160,7 +160,7 @@ public class Etapa2Controller : MonoBehaviour
             new DialogueLine("Narrador", "Su cuerpo seguía siendo el de un pulpo… pero su mente ya no era la misma.", false, Color.clear),
         }, skin);
 
-        yield return StageFlow.OutroCard("Etapa 2 superada", "Continuará… Etapa 3: Algo ha cambiado", nextScene);
+        yield return StageFlow.OutroCard("Etapa 2 superada", "Etapa 3: Algo ha cambiado", string.IsNullOrEmpty(nextScene) ? "Etapa3_Casa" : nextScene);
     }
 
     IEnumerator Erupcion()
