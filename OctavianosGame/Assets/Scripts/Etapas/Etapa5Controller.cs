@@ -239,10 +239,11 @@ public class Etapa5Controller : MonoBehaviour
             yield return null;
         }
         var volver = UIKit.Label(canvas.transform, "Volver", new Vector2(0f, 0.03f), new Vector2(1f, 0.1f),
-                                 "Pulsa ESPACIO para volver a empezar", 28, new Color(1f, 1f, 1f, 0.7f), TextAnchor.MiddleCenter, FontStyle.Italic);
+                                 "Pulsa ESPACIO para volver al menú", 28, new Color(1f, 1f, 1f, 0.7f), TextAnchor.MiddleCenter, FontStyle.Italic);
         yield return null;
         while (!UIKit.ConfirmPressed()) yield return null;
-        if (Application.CanStreamedLevelBeLoaded("Etapa1_Profundidades")) SceneManager.LoadScene("Etapa1_Profundidades");
+        if (Application.CanStreamedLevelBeLoaded(Juego.EscenaMenu)) SceneManager.LoadScene(Juego.EscenaMenu);
+        else if (Application.CanStreamedLevelBeLoaded("Etapa1_Profundidades")) SceneManager.LoadScene("Etapa1_Profundidades");
     }
 
     /// <summary>La luz y el agua se van apagando (la ciudad se queda a oscuras).</summary>

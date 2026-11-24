@@ -27,12 +27,20 @@ public class MisionRA : MonoBehaviour
 
     static readonly List<ARRaycastHit> impactos = new List<ARRaycastHit>();
     bool listo, colocado;
+    RectTransform volver;
 
     void Start()
     {
         octavio.gameObject.SetActive(false);
         camaraSimple.enabled = false;
         Mensaje("Comprobando tu móvil…");
+        if (estado != null && Application.CanStreamedLevelBeLoaded("MenuMovil"))
+        {
+            var canvas = estado.canvas.transform;
+            var img = UIKit.Panel(canvas, "Volver", new Vector2(0.03f, 0.02f), new Vector2(0.35f, 0.08f), new Color(0f, 0f, 0f, 0.55f));
+            UIKit.Label(img.transform, "Texto", Vector2.zero, Vector2.one, "‹ Volver", 36, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            volver = img.rectTransform;
+        }
         StartCoroutine(ModoRA.Detectar(Preparar));
     }
 
@@ -69,7 +77,15 @@ public class MisionRA : MonoBehaviour
                 octavio.rotation = Quaternion.Slerp(octavio.rotation, Quaternion.LookRotation(hacia), Time.deltaTime * 4f);
         }
 
-        if (!Toque(out Vector2 punto)) return;
+        // Botón atrás de Android o "Volver"
+        bool atras = Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame;
+        bool tocado = Toque(out Vector2 punto);
+        if (atras || (tocado && volver != null && RectTransformUtility.RectangleContainsScreenPoint(volver, punto, null)))
+        {
+            if (Application.CanStreamedLevelBeLoaded("MenuMovil")) UnityEngine.SceneManagement.SceneManager.LoadScene("MenuMovil");
+            return;
+        }
+        if (!tocado) return;
 
         if (ModoRA.Actual == ModoRA.Tipo.Completa)
         {

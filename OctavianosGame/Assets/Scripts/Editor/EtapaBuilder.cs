@@ -1339,6 +1339,109 @@ public static class EtapaBuilder
         Debug.Log("[Octavianos] Escena RA creada. En el editor usa la webcam (modo cámara); en el móvil elige sola el modo.");
     }
 
+    // =====================================================================
+    //  MENÚ PRINCIPAL Y COMPILACIONES (exe de Windows y APK de Android)
+    // =====================================================================
+
+    const string ScenePathMenu = "Assets/Scenes/MenuPrincipal.unity";
+
+    [MenuItem("Octavianos/Crear menú principal")]
+    public static void CrearMenuPrincipal()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        var camGO = new GameObject("Main Camera");
+        camGO.tag = "MainCamera";
+        var cam = camGO.AddComponent<Camera>();
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.02f, 0.09f, 0.14f);
+        camGO.AddComponent<AudioListener>();
+        new GameObject("Menu").AddComponent<MenuPrincipal>();
+        EditorSceneManager.SaveScene(scene, ScenePathMenu);
+        // El menú tiene que ser la primera escena del juego
+        var lista = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
+        lista.RemoveAll(e => e.path == ScenePathMenu);
+        lista.Insert(0, new EditorBuildSettingsScene(ScenePathMenu, true));
+        EditorBuildSettings.scenes = lista.ToArray();
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Octavianos] Menú principal creado (es la primera escena del juego).");
+    }
+
+    static readonly string[] EscenasPC =
+    {
+        ScenePathMenu,
+        "Assets/Scenes/Etapa1_Profundidades.unity",
+        "Assets/Scenes/Etapa2_Geiser.unity",
+        "Assets/Scenes/Etapa3_Casa.unity",
+        "Assets/Scenes/Etapa4_Octopolis.unity",
+        "Assets/Scenes/Etapa5_Traicion.unity",
+    };
+
+    [MenuItem("Octavianos/Crear menú del móvil (bienestar)")]
+    public static void CrearMenuMovil()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+        var camGO = new GameObject("Main Camera");
+        camGO.tag = "MainCamera";
+        var cam = camGO.AddComponent<Camera>();
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = new Color(0.03f, 0.11f, 0.17f);
+        camGO.AddComponent<AudioListener>();
+        new GameObject("AppMovil").AddComponent<AppMovil>();
+        if (!AssetDatabase.IsValidFolder("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
+        EditorSceneManager.SaveScene(scene, "Assets/Scenes/MenuMovil.unity");
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Octavianos] Menú del móvil creado (Assets/Scenes/MenuMovil.unity). Es la primera escena del APK.");
+    }
+
+    [MenuItem("Octavianos/Construir exe de Windows")]
+    public static void ConstruirWindows()
+    {
+        PlayerSettings.productName = "Los Octavianos";
+        PlayerSettings.companyName = "Equipo Destello UCJC";
+        PlayerSettings.fullScreenMode = FullScreenMode.FullScreenWindow;
+        string ruta = System.IO.Path.GetFullPath("Builds/Windows/LosOctavianos.exe");
+        var r = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+        {
+            scenes = EscenasPC,
+            locationPathName = ruta,
+            target = BuildTarget.StandaloneWindows64,
+            targetGroup = BuildTargetGroup.Standalone,
+            options = BuildOptions.None,
+        });
+        Debug.Log($"[Octavianos] Exe de Windows: {r.summary.result} ({r.summary.totalErrors} errores) → {ruta}");
+        if (r.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded) EditorUtility.RevealInFinder(ruta);
+    }
+
+    [MenuItem("Octavianos/Construir APK de Android (móvil)")]
+    public static void ConstruirAndroid()
+    {
+        var nt = UnityEditor.Build.NamedBuildTarget.Android;
+        PlayerSettings.productName = "Los Octavianos";
+        PlayerSettings.companyName = "Equipo Destello UCJC";
+        PlayerSettings.SetApplicationIdentifier(nt, "com.ucjc.octavianos");
+        PlayerSettings.SetScriptingBackend(nt, ScriptingImplementation.IL2CPP);   // ARCore necesita 64 bits
+        PlayerSettings.Android.targetArchitectures = AndroidArchitecture.ARM64;
+        PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.Android, false);
+        PlayerSettings.SetGraphicsAPIs(BuildTarget.Android, new[] { UnityEngine.Rendering.GraphicsDeviceType.OpenGLES3 });
+        PlayerSettings.defaultInterfaceOrientation = UIOrientation.Portrait;
+        string ruta = System.IO.Path.GetFullPath("Builds/Android/LosOctavianos.apk");
+        var escenas = new List<string>();
+        foreach (var e in new[] { "Assets/Scenes/MenuMovil.unity", ScenePathRA })
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(e) != null) escenas.Add(e);
+        var r = BuildPipeline.BuildPlayer(new BuildPlayerOptions
+        {
+            scenes = escenas.ToArray(),
+            locationPathName = ruta,
+            target = BuildTarget.Android,
+            targetGroup = BuildTargetGroup.Android,
+            options = BuildOptions.None,
+        });
+        Debug.Log($"[Octavianos] APK de Android: {r.summary.result} ({r.summary.totalErrors} errores) → {ruta}");
+        if (r.summary.result == UnityEditor.Build.Reporting.BuildResult.Succeeded) EditorUtility.RevealInFinder(ruta);
+    }
+
     static Material MatEmisiva(string nombre, Color color, float intensidad)
     {
         var m = Mat(nombre, color);
