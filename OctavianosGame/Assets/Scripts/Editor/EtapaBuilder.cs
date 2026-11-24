@@ -1357,6 +1357,7 @@ public static class EtapaBuilder
         cam.backgroundColor = new Color(0.02f, 0.09f, 0.14f);
         camGO.AddComponent<AudioListener>();
         new GameObject("Menu").AddComponent<MenuPrincipal>();
+        if (!AssetDatabase.IsValidFolder("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
         EditorSceneManager.SaveScene(scene, ScenePathMenu);
         // El menú tiene que ser la primera escena del juego
         var lista = new List<EditorBuildSettingsScene>(EditorBuildSettings.scenes);
