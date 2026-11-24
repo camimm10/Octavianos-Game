@@ -13,25 +13,28 @@ public class MinijuegoConfianza : Minigame
 {
     public int needed = 5; // de 8 posibles: se perdona un fallo (una o dos respuestas neutras, o una cortante leve)
 
-    struct Respuesta
+    protected struct Respuesta
     {
         public string texto, reaccion;
         public int puntos;
         public Respuesta(string texto, int puntos, string reaccion) { this.texto = texto; this.puntos = puntos; this.reaccion = reaccion; }
     }
 
-    struct Pregunta
+    protected struct Pregunta
     {
         public string quien, frase;
         public Color color;
         public Respuesta[] respuestas;
     }
 
-    static readonly Color Mama = new Color(0.95f, 0.55f, 0.7f);
-    static readonly Color Brisa = new Color(0.65f, 0.45f, 0.9f);
-    static readonly Color Abuelo = new Color(0.55f, 0.65f, 0.75f);
+    protected static readonly Color Mama = new Color(0.95f, 0.55f, 0.7f);
+    protected static readonly Color Brisa = new Color(0.65f, 0.45f, 0.9f);
+    protected static readonly Color Abuelo = new Color(0.55f, 0.65f, 0.75f);
 
-    readonly Pregunta[] preguntas =
+    Pregunta[] preguntas;
+
+    /// <summary>Las preguntas de este minijuego (la Etapa 5 usa otras con la misma pantalla).</summary>
+    protected virtual Pregunta[] CrearPreguntas() => new[]
     {
         new Pregunta
         {
@@ -91,6 +94,7 @@ public class MinijuegoConfianza : Minigame
         },
     };
 
+    int maxPuntos = 8;
     RectTransform fill;
     Image retrato;
     Text nombre, frase, reaccion, marcador;
@@ -103,9 +107,16 @@ public class MinijuegoConfianza : Minigame
         "Contesta a sus preguntas con 1, 2, 3 o con clic. Ser sincero y abrirse genera confianza;\n" +
         "esconderse o atacar la rompe. Necesitas " + needed + " puntos de confianza para que te escuchen.";
     protected override Color AccentColor => StageFlow.Corazon;
+    protected virtual string MensajeVictoria => "Tu familia confía en ti. ¡Ahora te escucharán!";
+    protected virtual string MensajeRendirse => "Octavio se encierra en su cueva sin decir nada…";
+    protected virtual string MensajeDerrota(int c) => $"Confianza {c} de {needed}… todavía no te entienden.";
+    protected virtual string NombreMarcador => "Confianza";
 
     protected override void Build()
     {
+        preguntas = CrearPreguntas();
+        maxPuntos = 0;
+        foreach (var p in preguntas) { int m = int.MinValue; foreach (var r in p.respuestas) m = Mathf.Max(m, r.puntos); maxPuntos += m; }
         CreateProgressBar(out fill);
         marcador = UIKit.Label(root, "Confianza", new Vector2(0.25f, 0.955f), new Vector2(0.75f, 0.99f), "", 24, Color.white);
 
@@ -156,7 +167,7 @@ public class MinijuegoConfianza : Minigame
             yield return null;
             while (elegida < 0)
             {
-                if (UIKit.EscapePressed()) { yield return End(false, "Octavio se encierra en su cueva sin decir nada…"); yield break; }
+                if (UIKit.EscapePressed()) { yield return End(false, MensajeRendirse); yield break; }
                 int n = UIKit.DigitPressed();
                 if (n >= 0 && n < 3) elegida = n;
                 for (int i = 0; i < 3; i++) if (UIKit.Clicked(botones[i])) elegida = i;
@@ -172,13 +183,13 @@ public class MinijuegoConfianza : Minigame
             yield return new WaitForSeconds(2.4f);
         }
 
-        if (confianza >= needed) yield return End(true, "Tu familia confía en ti. ¡Ahora te escucharán!");
-        else yield return End(false, $"Confianza {confianza} de {needed}… todavía no te entienden.");
+        if (confianza >= needed) yield return End(true, MensajeVictoria);
+        else yield return End(false, MensajeDerrota(confianza));
     }
 
     void UpdateMarcador(int c)
     {
-        marcador.text = $"Confianza: {c}   (necesitas {needed})";
-        SetProgress(fill, Mathf.Max(0, c) / 8f);
+        marcador.text = $"{NombreMarcador}: {c}   (necesitas {needed})";
+        SetProgress(fill, Mathf.Max(0, c) / (float)maxPuntos);
     }
 }

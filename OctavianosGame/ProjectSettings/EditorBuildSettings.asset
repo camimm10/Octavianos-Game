@@ -20,6 +20,9 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Etapa4_Octopolis.unity
     guid: 2d9184cda9bf18e4285ed0312b70dcaa
+  - enabled: 1
+    path: Assets/Scenes/Etapa5_Traicion.unity
+    guid: c411575625d31a2478d450bf1896813f
   m_configObjects:
     UnityEditor.XR.ARCore.ARCoreSettings: {fileID: 11400000, guid: 443ab70e2038bc941ac765de3a32b273, type: 2}
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

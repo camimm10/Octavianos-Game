@@ -201,7 +201,7 @@ public class Etapa4Controller : MonoBehaviour
             new DialogueLine("Narrador", "Pero su mayor desafío aún estaba por llegar.", false, Color.clear),
         });
 
-        yield return StageFlow.OutroCard("Etapa 4 superada", "Continuará… Etapa 5: La gran traición", nextScene);
+        yield return StageFlow.OutroCard("Etapa 4 superada", "Etapa 5: La gran traición", string.IsNullOrEmpty(nextScene) ? "Etapa5_Traicion" : nextScene);
     }
 
     /// <summary>Los edificios de la ciudad aparecen uno a uno, creciendo desde la arena.</summary>

@@ -18,14 +18,17 @@ public class MinijuegoDestello : Minigame
     static readonly Color[] LuzColor = { new Color(0.95f, 0.25f, 0.25f), new Color(0.3f, 0.9f, 0.4f), new Color(0.35f, 0.55f, 1f) };
     static readonly string[] LuzHex = { "#F24040", "#4DE666", "#598CFF" };
 
-    class Reto
+    protected class Reto
     {
         public string titulo, enunciado, pista;
         public System.Func<DestelloVM.Resultado, bool> superado;
         public int[][] solucion; // para el piloto automático y la pista final
     }
 
-    readonly List<Reto> retos = new List<Reto>
+    List<Reto> retos;
+
+    /// <summary>Los retos de este minijuego (la Etapa 5 usa otros con la misma pantalla).</summary>
+    protected virtual List<Reto> CrearRetos() => new List<Reto>
     {
         new Reto
         {
@@ -71,11 +74,13 @@ public class MinijuegoDestello : Minigame
         "Gira cada linterna con 1, 2, 3, 4 (o con clic): rojo ●  →  verde ■  →  azul ▲.\n" +
         "ENTER emite el destello · RETROCESO borra el último · R empieza de nuevo · H abre la chuleta.";
     protected override Color AccentColor => StageFlow.Mente;
+    protected virtual string MensajeVictoria => "¡La puerta de piedra reconoce la contraseña!";
 
     // ------------------------------------------------------------------ Montaje
 
     protected override void Build()
     {
+        retos = CrearRetos();
         CreateProgressBar(out fill);
 
         // Reto (arriba)
@@ -207,7 +212,7 @@ public class MinijuegoDestello : Minigame
                     reto++;
                     if (reto >= retos.Count)
                     {
-                        yield return End(true, "¡La puerta de piedra reconoce la contraseña!");
+                        yield return End(true, MensajeVictoria);
                         yield break;
                     }
                     programa.Clear();
