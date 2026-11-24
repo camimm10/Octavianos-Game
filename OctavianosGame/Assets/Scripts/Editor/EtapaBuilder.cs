@@ -1258,6 +1258,87 @@ public static class EtapaBuilder
         return raiz;
     }
 
+    // =====================================================================
+    //  REALIDAD AUMENTADA · escena de prueba para el móvil (cualquier móvil)
+    // =====================================================================
+
+    const string ScenePathRA = "Assets/Scenes/RA_Prueba.unity";
+
+    [MenuItem("Octavianos/Crear escena RA de prueba (móvil)")]
+    public static void CrearEscenaRA()
+    {
+        if (!EditorSceneManager.SaveCurrentModifiedScenesIfUserWantsTo()) return;
+        var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
+        var luz = new GameObject("Luz").AddComponent<Light>();
+        luz.type = LightType.Directional;
+        luz.transform.rotation = Quaternion.Euler(50f, -30f, 0f);
+        luz.intensity = 1.1f;
+
+        // Sesión de RA (solo se activa si el móvil tiene ARCore)
+        var sesionGO = new GameObject("AR Session");
+        var sesion = sesionGO.AddComponent<UnityEngine.XR.ARFoundation.ARSession>();
+        sesionGO.AddComponent<UnityEngine.XR.ARFoundation.ARInputManager>();
+
+        // XR Origin con la cámara
+        var origenGO = new GameObject("XR Origin");
+        var origen = origenGO.AddComponent<Unity.XR.CoreUtils.XROrigin>();
+        var planos = origenGO.AddComponent<UnityEngine.XR.ARFoundation.ARPlaneManager>();
+        var rayos = origenGO.AddComponent<UnityEngine.XR.ARFoundation.ARRaycastManager>();
+        var offset = new GameObject("Camera Offset");
+        offset.transform.SetParent(origenGO.transform, false);
+        var camGO = new GameObject("Main Camera");
+        camGO.tag = "MainCamera";
+        camGO.transform.SetParent(offset.transform, false);
+        var cam = camGO.AddComponent<Camera>();
+        cam.clearFlags = CameraClearFlags.SolidColor;
+        cam.backgroundColor = Color.black;
+        cam.nearClipPlane = 0.05f;
+        cam.farClipPlane = 30f;
+        camGO.AddComponent<AudioListener>();
+        var camaraAR = camGO.AddComponent<UnityEngine.XR.ARFoundation.ARCameraManager>();
+        var fondoAR = camGO.AddComponent<UnityEngine.XR.ARFoundation.ARCameraBackground>();
+        var tpd = camGO.AddComponent<UnityEngine.InputSystem.XR.TrackedPoseDriver>();
+        var pos = new UnityEngine.InputSystem.InputAction("Posicion", binding: "<HandheldARInputDevice>/devicePosition");
+        var rot = new UnityEngine.InputSystem.InputAction("Rotacion", binding: "<HandheldARInputDevice>/deviceRotation");
+        tpd.positionInput = new UnityEngine.InputSystem.InputActionProperty(pos);
+        tpd.rotationInput = new UnityEngine.InputSystem.InputActionProperty(rot);
+        var simple = camGO.AddComponent<CamaraSimpleRA>();
+        origen.Camera = cam;
+        origen.CameraFloorOffsetObject = offset;
+
+        // Octavio, de unos 25 cm
+        var piel = Mat("PielOctavio", new Color(0.85f, 0.45f, 0.35f));
+        var octavio = CrearPulpo("Octavio", new Vector3(0f, -0.35f, 1.2f), piel, Mat("OjoBlanco", Color.white), Mat("OjoPupila", new Color(0.05f, 0.05f, 0.05f)), out var cuerpo, out _);
+        octavio.transform.localScale = Vector3.one * 0.2f;
+        var idle = octavio.AddComponent<NPCIdle>();
+        idle.visual = cuerpo;
+        idle.bobAmplitude = 0.08f;
+        idle.lookDistance = 0f;
+
+        // Texto de estado
+        var canvas = UIKit.CreateCanvas("UI", 10);
+        var panel = UIKit.Panel(canvas.transform, "Panel", new Vector2(0.03f, 0.82f), new Vector2(0.97f, 0.98f), new Color(0f, 0f, 0f, 0.55f));
+        var texto = UIKit.Label(panel.transform, "Estado", new Vector2(0.03f, 0.05f), new Vector2(0.97f, 0.95f), "", 34, Color.white, TextAnchor.MiddleCenter);
+
+        var mision = new GameObject("MisionRA").AddComponent<MisionRA>();
+        mision.sesion = sesion;
+        mision.camaraAR = camaraAR;
+        mision.fondoAR = fondoAR;
+        mision.seguimientoAR = tpd;
+        mision.planos = planos;
+        mision.rayos = rayos;
+        mision.camaraSimple = simple;
+        mision.octavio = octavio.transform;
+        mision.estado = texto;
+
+        if (!AssetDatabase.IsValidFolder("Assets/Scenes")) AssetDatabase.CreateFolder("Assets", "Scenes");
+        EditorSceneManager.SaveScene(scene, ScenePathRA);
+        AnadirABuild(ScenePathRA);
+        AssetDatabase.SaveAssets();
+        Debug.Log("[Octavianos] Escena RA creada. En el editor usa la webcam (modo cámara); en el móvil elige sola el modo.");
+    }
+
     static Material MatEmisiva(string nombre, Color color, float intensidad)
     {
         var m = Mat(nombre, color);
