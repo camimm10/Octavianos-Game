@@ -51,6 +51,12 @@ public class Juego : MonoBehaviour
             PlayerPrefs.SetInt(ClaveProgreso, n + 1);
             PlayerPrefs.Save();
         }
+        if (n >= 0)
+        {
+            // Objetos conseguidos dibujando en el móvil (códigos Destello)
+            var octavio = FindAnyObjectByType<OctavioSwimController>();
+            if (octavio != null) ObjetosOctavio.Equipar(octavio.gameObject);
+        }
         if (n >= 0) musica.Tocar((MusicaProcedural.Ambiente)(n + 1));
         else if (escena.name == EscenaMenu) musica.Tocar(MusicaProcedural.Ambiente.Menu);
         else musica.Parar(); // escenas del móvil, etc.

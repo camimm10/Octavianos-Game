@@ -32,6 +32,7 @@ public class MisionRA : MonoBehaviour
     void Start()
     {
         octavio.gameObject.SetActive(false);
+        ObjetosOctavio.Equipar(octavio.gameObject); // lo que hayas conseguido dibujando
         camaraSimple.enabled = false;
         Mensaje("Comprobando tu móvil…");
         if (estado != null && Application.CanStreamedLevelBeLoaded("MenuMovil"))
