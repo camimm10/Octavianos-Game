@@ -12,11 +12,14 @@ using UnityEngine;
 public static class DecoradoCartoon
 {
     static Mesh[] rocas, corales, algas;
+    static Mesh cupulaPiedra, columnaRoca, torre, cebolla, cubo;
     static readonly Dictionary<Material, Material> copias = new Dictionary<Material, Material>();
 
     public static void Aplicar()
     {
         if (rocas == null) Generar();
+        Orcas();
+        Humanos();
         var bloque = new MaterialPropertyBlock();
         foreach (var mf in Object.FindObjectsByType<MeshFilter>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
@@ -45,7 +48,42 @@ public static class DecoradoCartoon
                 r.sharedMaterial = Copia(r.sharedMaterial, 0.55f, 0.25f, false);
                 mf.transform.rotation = Quaternion.Euler(0f, h % 360, 0f);
             }
-            else if (n.StartsWith("Alga_"))
+            else if (n == "Cupula" || n == "CasaRoca" || n == "RocaDespensa" || n.StartsWith("RocaCueva_"))
+            {
+                bool deEdificio = mf.transform.parent != null && mf.transform.parent.name.StartsWith("Edificio_");
+                if (deEdificio)
+                {
+                    mf.sharedMesh = cebolla;   // cúpula de cebolla en lo alto de las torres
+                    r.sharedMaterial = Copia(r.sharedMaterial, 0.6f, 0.2f, false);
+                }
+                else
+                {
+                    mf.sharedMesh = n.StartsWith("RocaCueva_") ? rocas[h % rocas.Length] : cupulaPiedra;   // piedra tallada
+                    r.sharedMaterial = Copia(r.sharedMaterial, 0.15f, 0f, false);
+                }
+            }
+            else if (n == "Cuerpo" && mf.transform.parent != null && mf.transform.parent.name.StartsWith("Edificio_"))
+            {
+                mf.sharedMesh = torre;
+                r.sharedMaterial = Copia(r.sharedMaterial, 0.35f, 0.08f, false);
+            }
+            else if (n.StartsWith("Borde_"))
+            {
+                mf.sharedMesh = columnaRoca;
+                r.sharedMaterial = Copia(r.sharedMaterial, 0.12f, 0f, false);
+                mf.transform.rotation = Quaternion.Euler(0f, h % 360, 0f);
+            }
+            else if (n.StartsWith("Pilar") || n == "Dintel" || n.StartsWith("Bloque_") || n.StartsWith("Asiento_") || n == "Viga" || n == "PuertaDePiedra")
+            {
+                mf.sharedMesh = cubo;
+                r.sharedMaterial = Copia(r.sharedMaterial, 0.3f, 0f, false);
+            }
+            else if (n.StartsWith("Adorno_"))
+            {
+                mf.sharedMesh = corales[2];
+                r.sharedMaterial = Copia(r.sharedMaterial, 0.55f, 0.25f, false);
+            }
+            else if (n.StartsWith("Alga_") || n == "Cultivo")
             {
                 mf.sharedMesh = algas[h % algas.Length];
                 r.sharedMaterial = Copia(r.sharedMaterial, 0.35f, 0.12f, true);
@@ -53,6 +91,152 @@ public static class DecoradoCartoon
                 mf.transform.rotation = Quaternion.Euler(e.x, h % 360, e.z);
             }
         }
+    }
+
+    // ================================================================ Orcas
+
+    /// <summary>Cambia las orcas de cápsulas y cubos por orcas de dibujos animados (las busca por su aleta dorsal).</summary>
+    static void Orcas()
+    {
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (t.name != "AletaDorsal" || t.parent == null || t.parent.Find("OrcaCuerpo") != null) continue;
+            var visual = t.parent;
+            var cuerpo = visual.Find("Cuerpo"); var barriga = visual.Find("Barriga");
+            if (cuerpo == null || barriga == null) continue;
+            var negro = Copia(cuerpo.GetComponent<Renderer>().sharedMaterial, 0.65f, 0f, false);
+            var blanco = Copia(barriga.GetComponent<Renderer>().sharedMaterial, 0.6f, 0f, false);
+            if (orcaCuerpo == null) GenerarOrca();
+            Pieza(visual, "OrcaCuerpo", orcaCuerpo, negro);
+            var bar = Pieza(visual, "OrcaBarriga", orcaEsfera, blanco);       // barriga: elipsoide suave que asoma por debajo
+            bar.localPosition = new Vector3(0f, -0.4f, 0.95f); bar.localScale = new Vector3(0.95f, 0.72f, 2.82f);
+            var ojoN = Copia(visual.Find("OjoI") != null ? visual.Find("OjoI").GetComponent<Renderer>().sharedMaterial : null, 0.9f, 0f, false);
+            for (int lado = -1; lado <= 1; lado += 2)
+            {
+                var mancha = Pieza(visual, lado < 0 ? "OrcaManchaI" : "OrcaManchaD", orcaEsfera, blanco);   // mancha blanca tras el ojo
+                mancha.localPosition = new Vector3(0.9f * lado, 0.4f, 1.85f);
+                mancha.localRotation = Quaternion.Euler(0f, 18f * lado, 8f * lado);
+                mancha.localScale = new Vector3(0.32f, 0.27f, 0.78f);
+                var ojo = Pieza(visual, lado < 0 ? "OrcaOjoI" : "OrcaOjoD", orcaEsfera, ojoN ?? negro);
+                ojo.localPosition = new Vector3(0.99f * lado, 0.02f, 2.5f);
+                ojo.localScale = Vector3.one * 0.12f;
+                var brillo = Pieza(ojo, "Brillo", orcaEsfera, blanco);
+                brillo.localPosition = new Vector3(0.35f * lado, 0.45f, 0.35f); brillo.localScale = Vector3.one * 0.35f;
+            }
+            Pieza(visual, "OrcaDorsal", orcaDorsal, negro);
+            Pieza(visual, "OrcaCola", orcaCola, negro);
+            var ai = Pieza(visual, "OrcaAletaI", orcaAleta, negro);
+            ai.localPosition = new Vector3(-0.85f, -0.55f, 1.1f); ai.localRotation = Quaternion.Euler(0f, 15f, -28f); ai.localScale = new Vector3(-1f, 1f, 1f);
+            var ad = Pieza(visual, "OrcaAletaD", orcaAleta, negro);
+            ad.localPosition = new Vector3(0.85f, -0.55f, 1.1f); ad.localRotation = Quaternion.Euler(0f, -15f, 28f);
+            foreach (var nombre in new[] { "Cuerpo", "Barriga", "AletaDorsal", "Cola", "AletaI", "AletaD", "ManchaI", "ManchaD", "OjoI", "OjoD" })
+            {
+                var x = visual.Find(nombre);
+                if (x != null && x.GetComponent<Renderer>() != null) x.GetComponent<Renderer>().enabled = false;
+            }
+        }
+    }
+
+    static Mesh orcaCuerpo, orcaEsfera, orcaDorsal, orcaCola, orcaAleta;
+
+    // ================================================================ Humano
+
+    /// <summary>Al humano de cápsulas le pone cara de dibujo animado (ojos, nariz, boca y pelo), manos y zapatos.</summary>
+    static void Humanos()
+    {
+        foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
+        {
+            if (t.name != "Humano") continue;
+            var cabeza = t.Find("Cabeza");
+            if (cabeza == null || cabeza.Find("Pelo") != null) continue;
+            var piel = cabeza.GetComponent<Renderer>().sharedMaterial;
+            var blanco = Tono(piel, Color.white, 0.8f);
+            var oscuro = Tono(piel, new Color(0.08f, 0.06f, 0.06f), 0.85f);
+            var pelo = Tono(piel, new Color(0.38f, 0.22f, 0.1f), 0.45f);
+            var zapato = Tono(piel, new Color(0.15f, 0.15f, 0.18f), 0.4f);
+            for (int lado = -1; lado <= 1; lado += 2)
+            {
+                Bolita(cabeza, "Ojo", new Vector3(0.17f * lado, 0.07f, 0.41f), new Vector3(0.2f, 0.24f, 0.12f), blanco);
+                Bolita(cabeza, "Pupila", new Vector3(0.17f * lado, 0.06f, 0.47f), new Vector3(0.1f, 0.12f, 0.05f), oscuro);
+                Bolita(cabeza, "Ceja", new Vector3(0.17f * lado, 0.22f, 0.44f), new Vector3(0.17f, 0.035f, 0.05f), pelo);
+                Bolita(t, "Mano", new Vector3(0.42f * lado, -0.4f, 0f), Vector3.one * 0.2f, piel);
+                Bolita(t, "Zapato", new Vector3(0.15f * lado, -1.42f, 0.07f), new Vector3(0.24f, 0.14f, 0.36f), zapato);
+                Bolita(cabeza, "Oreja", new Vector3(0.49f * lado, 0f, 0f), new Vector3(0.12f, 0.2f, 0.12f), piel);
+            }
+            Bolita(cabeza, "Nariz", new Vector3(0f, -0.05f, 0.5f), Vector3.one * 0.12f, piel);
+            Bolita(cabeza, "Boca", new Vector3(0f, -0.2f, 0.45f), new Vector3(0.18f, 0.05f, 0.06f), oscuro);
+            Bolita(cabeza, "Pelo", new Vector3(0f, 0.22f, -0.1f), new Vector3(1.08f, 0.76f, 1.08f), pelo);
+        }
+    }
+
+    static readonly Dictionary<string, Material> tonos = new Dictionary<string, Material>();
+
+    static Material Tono(Material baseM, Color c, float suavidad)
+    {
+        string k = ColorUtility.ToHtmlStringRGB(c);
+        if (tonos.TryGetValue(k, out var m) && m != null) return m;
+        m = new Material(baseM) { name = "Humano_" + k };
+        if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
+        if (m.HasProperty("_Smoothness")) m.SetFloat("_Smoothness", suavidad);
+        tonos[k] = m;
+        return m;
+    }
+
+    static void Bolita(Transform padre, string nombre, Vector3 pos, Vector3 escala, Material m)
+    {
+        var g = GameObject.CreatePrimitive(PrimitiveType.Sphere);
+        g.name = nombre;
+        Object.Destroy(g.GetComponent<Collider>());
+        g.transform.SetParent(padre, false);
+        g.transform.localPosition = pos;
+        g.transform.localScale = escala;
+        g.GetComponent<Renderer>().sharedMaterial = m;
+    }
+
+    static Transform Pieza(Transform padre, string nombre, Mesh malla, Material m)
+    {
+        var g = new GameObject(nombre);
+        g.transform.SetParent(padre, false);
+        g.AddComponent<MeshFilter>().sharedMesh = malla;
+        g.AddComponent<MeshRenderer>().sharedMaterial = m;
+        return g.transform;
+    }
+
+    static void GenerarOrca()
+    {
+        // Cuerpo: torpedo a lo largo de Z (cola en -Z, morro en +Z), algo aplastado
+        var perfil = new[]
+        {
+            new Vector2(-3.75f, 0f), new Vector2(-3.65f, 0.2f), new Vector2(-3.3f, 0.36f), new Vector2(-2.7f, 0.6f), new Vector2(-1.9f, 0.9f),
+            new Vector2(-0.9f, 1.15f), new Vector2(0.1f, 1.27f), new Vector2(1.1f, 1.27f), new Vector2(2.0f, 1.15f), new Vector2(2.8f, 0.94f),
+            new Vector2(3.3f, 0.7f), new Vector2(3.62f, 0.42f), new Vector2(3.76f, 0.16f), new Vector2(3.8f, 0f),
+        };
+        var giro = Quaternion.Euler(90f, 0f, 0f);
+        var escala = new Vector3(1f, 0.92f, 1f);
+        orcaCuerpo = MallasCartoon.Torno(perfil, 28, "OrcaCuerpo", giro, escala);
+        // Esfera de radio 1 (para barriga, manchas y ojos)
+        var semi = new List<Vector2>();
+        for (int i = 0; i <= 12; i++) { float a = -Mathf.PI / 2f + i * Mathf.PI / 12f; semi.Add(new Vector2(Mathf.Sin(a), Mathf.Cos(a))); }
+        orcaEsfera = MallasCartoon.Torno(semi, 24, "EsferaSuave", suavizado: 1);
+        // Aleta dorsal curvada hacia atrás (plano Z-Y, grosor en X)
+        orcaDorsal = MallasCartoon.Extruir(new[]
+        {
+            new Vector2(-0.9f, 0f), new Vector2(0.9f, 0f), new Vector2(0.5f, 0.6f), new Vector2(0f, 1.3f),
+            new Vector2(-0.55f, 1.95f), new Vector2(-1.05f, 2.35f), new Vector2(-0.92f, 1.65f), new Vector2(-0.8f, 0.9f),
+        }, 0.28f, Vector3.forward, Vector3.up, Vector3.right, new Vector3(0f, 0.95f, -0.3f), "OrcaDorsal");
+        // Cola con dos lóbulos (plano X-Z, grosor en Y)
+        orcaCola = MallasCartoon.Extruir(new[]
+        {
+            new Vector2(0f, -3.35f), new Vector2(0.6f, -3.7f), new Vector2(1.5f, -4.05f), new Vector2(1.8f, -4.45f), new Vector2(1.05f, -4.3f),
+            new Vector2(0.35f, -4.05f), new Vector2(0f, -4.15f), new Vector2(-0.35f, -4.05f), new Vector2(-1.05f, -4.3f), new Vector2(-1.8f, -4.45f),
+            new Vector2(-1.5f, -4.05f), new Vector2(-0.6f, -3.7f),
+        }, 0.22f, Vector3.right, Vector3.forward, Vector3.up, Vector3.zero, "OrcaCola");
+        // Aleta lateral en forma de remo (hacia +X)
+        orcaAleta = MallasCartoon.Extruir(new[]
+        {
+            new Vector2(0f, 0.38f), new Vector2(0f, -0.38f), new Vector2(0.8f, -0.48f), new Vector2(1.4f, -0.38f), new Vector2(1.62f, -0.1f),
+            new Vector2(1.45f, 0.2f), new Vector2(0.8f, 0.42f),
+        }, 0.16f, Vector3.right, Vector3.forward, Vector3.up, Vector3.zero, "OrcaAleta");
     }
 
     static int Hash(string s)
@@ -93,14 +277,29 @@ public static class DecoradoCartoon
         corales = new[] { CoralRamas(51), Anemona(), CoralBurbuja(97) };
         algas = new Mesh[3];
         for (int i = 0; i < algas.Length; i++) algas[i] = Alga(i * 2.1f, i);
+        cupulaPiedra = Roca(4321, 0.018f, false, 1f, 10, 16);
+        columnaRoca = Roca(999, 0.05f, false, 2f, 8, 9);
+        cubo = MallasCartoon.CuboRedondeado(0.14f);
+        // Torre: fuste con base ancha y anillos (del cilindro de Unity: alto de -1 a 1, radio 0,5)
+        torre = MallasCartoon.Torno(new[]
+        {
+            new Vector2(-1f, 0f), new Vector2(-1f, 0.6f), new Vector2(-0.9f, 0.6f), new Vector2(-0.86f, 0.52f), new Vector2(-0.3f, 0.5f),
+            new Vector2(-0.27f, 0.56f), new Vector2(-0.2f, 0.56f), new Vector2(-0.17f, 0.5f), new Vector2(0.42f, 0.49f), new Vector2(0.45f, 0.55f),
+            new Vector2(0.52f, 0.55f), new Vector2(0.55f, 0.49f), new Vector2(0.94f, 0.5f), new Vector2(0.97f, 0.58f), new Vector2(1f, 0.58f), new Vector2(1f, 0f),
+        }, 28, "Torre", suavizado: 1);
+        // Cúpula de cebolla (de la esfera de Unity: de -0,5 a 0,5)
+        cebolla = MallasCartoon.Torno(new[]
+        {
+            new Vector2(-0.5f, 0f), new Vector2(-0.48f, 0.32f), new Vector2(-0.36f, 0.48f), new Vector2(-0.16f, 0.52f), new Vector2(0.05f, 0.45f),
+            new Vector2(0.2f, 0.32f), new Vector2(0.33f, 0.17f), new Vector2(0.44f, 0.07f), new Vector2(0.54f, 0.025f), new Vector2(0.62f, 0f),
+        }, 28, "Cebolla");
     }
 
     // ---------- Roca: esfera deformada con ruido, base aplanada, caras planas (estilo low-poly)
-    static Mesh Roca(int semilla)
+    static Mesh Roca(int semilla, float ruido = 0.05f, bool aplanar = true, float alto = 1f, int lat = 7, int lon = 11)
     {
         var rnd = new System.Random(semilla);
         float R() => (float)rnd.NextDouble();
-        int lat = 7, lon = 11;
         var f = new Vector3[4]; var fase = new float[4];
         for (int k = 0; k < 4; k++) { f[k] = new Vector3(R() * 2 - 1, R() * 2 - 1, R() * 2 - 1).normalized * (1.5f + R() * 2.5f); fase[k] = R() * 6.28f; }
         var pos = new Vector3[(lat + 1) * (lon + 1)];
@@ -111,9 +310,10 @@ public static class DecoradoCartoon
                 float ph = (j % lon) * Mathf.PI * 2f / lon;
                 var d = new Vector3(Mathf.Sin(th) * Mathf.Cos(ph), Mathf.Cos(th), Mathf.Sin(th) * Mathf.Sin(ph));
                 float r = 0.5f;
-                for (int k = 0; k < 4; k++) r += 0.05f * Mathf.Sin(Vector3.Dot(d, f[k]) + fase[k]);
+                for (int k = 0; k < 4; k++) r += ruido * Mathf.Sin(Vector3.Dot(d, f[k]) + fase[k]);
                 var p = d * r;
-                if (p.y < -0.2f) p.y = -0.2f + (p.y + 0.2f) * 0.25f;   // base plana para que apoye en el suelo
+                if (aplanar && p.y < -0.2f) p.y = -0.2f + (p.y + 0.2f) * 0.25f;   // base plana para que apoye en el suelo
+                p.y *= alto;
                 pos[i * (lon + 1) + j] = p;
             }
         // la costura: la última columna es la primera
