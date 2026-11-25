@@ -24,6 +24,10 @@ public class OctavioSkinColor : MonoBehaviour
     [SerializeField] bool readKeyboard = true;
 
     static readonly int BaseColorId = Shader.PropertyToID("_BaseColor"); // URP Lit
+    static readonly int EmissionId = Shader.PropertyToID("_EmissionColor");
+
+    /// <summary>Un poco de luz propia en la piel (estilo dibujos animados): el color se ve vivo aunque haya niebla.</summary>
+    public const float LuzPropia = 0.22f;
 
     MaterialPropertyBlock block;
     Color current;
@@ -64,6 +68,14 @@ public class OctavioSkinColor : MonoBehaviour
     /// <summary>Otros scripts (enigmas, diálogos, estado de ánimo) pueden llamar a esto.</summary>
     public void SetColor(Color c) => target = c;
 
+    /// <summary>Cambia las mallas que se tiñen (lo usa PulpoCartoon al poner la piel nueva).</summary>
+    public void UsarRenderers(Renderer[] r)
+    {
+        skinRenderers = r;
+        if (block == null) block = new MaterialPropertyBlock();
+        ApplyColor(current);
+    }
+
     /// <summary>Vuelve al color normal.</summary>
     public void ResetColor() => target = neutral;
 
@@ -74,6 +86,7 @@ public class OctavioSkinColor : MonoBehaviour
             if (r == null) continue;
             r.GetPropertyBlock(block);
             block.SetColor(BaseColorId, c);
+            block.SetColor(EmissionId, c * LuzPropia);
             r.SetPropertyBlock(block);
         }
     }

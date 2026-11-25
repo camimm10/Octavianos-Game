@@ -370,6 +370,7 @@ public class AccesoriosOctavio : MonoBehaviour
         if (m.HasProperty("_BaseColor")) m.SetColor("_BaseColor", c);
         if (m.HasProperty("_Color")) m.SetColor("_Color", c);
         if (m.HasProperty("_Cull")) m.SetFloat("_Cull", 0f);   // que se vea por las dos caras
+        if (m.HasProperty("_EmissionColor")) m.SetColor("_EmissionColor", c * 0.22f);   // su propio color, no el de la piel
         m.mainTexture = null;
         return m;
     }
