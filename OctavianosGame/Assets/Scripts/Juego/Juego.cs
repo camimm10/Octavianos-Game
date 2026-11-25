@@ -56,6 +56,7 @@ public class Juego : MonoBehaviour
             // Pulpos de dibujos animados (sustituyen a las primitivas) y acabado de imagen
             foreach (var p in FindObjectsByType<OctavioSkinColor>(FindObjectsSortMode.None)) PulpoCartoon.Aplicar(p.gameObject);
             AspectoVisual.Aplicar();
+            DecoradoCartoon.Aplicar();
             // Objetos conseguidos dibujando en el móvil (códigos Destello)
             var octavio = FindAnyObjectByType<OctavioSwimController>();
             if (octavio != null) ObjetosOctavio.Equipar(octavio.gameObject);
