@@ -62,7 +62,7 @@ public class MisionRA : MonoBehaviour
         else
         {
             PonerDelante();
-            Mensaje("Modo cámara (tu móvil no tiene ARCore).\nGira el móvil para mirar alrededor. Toca la pantalla para traer a Octavio delante.");
+            Mensaje("Modo cámara (tu móvil no tiene ARCore).\nOctavio te acompaña: gira el móvil y te seguirá.");
         }
         listo = true;
     }
@@ -70,6 +70,17 @@ public class MisionRA : MonoBehaviour
     void Update()
     {
         if (!listo) return;
+
+        // Modo cámara: Octavio te acompaña siempre delante, flotando un poco (así nunca se pierde)
+        if (ModoRA.Actual != ModoRA.Tipo.Completa && Camera.main != null)
+        {
+            if (!octavio.gameObject.activeSelf) octavio.gameObject.SetActive(true);
+            var cam = Camera.main.transform;
+            Vector3 delante = cam.forward; delante.y = 0f;
+            if (delante.sqrMagnitude < 0.01f) delante = Vector3.forward;
+            var objetivo = cam.position + delante.normalized * 1.2f + Vector3.down * 0.3f + Vector3.up * Mathf.Sin(Time.time * 1.5f) * 0.04f;
+            octavio.position = Vector3.Lerp(octavio.position, objetivo, 1f - Mathf.Exp(-3f * Time.deltaTime));
+        }
 
         // Que Octavio mire siempre hacia ti
         if (octavio.gameObject.activeSelf)
