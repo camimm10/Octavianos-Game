@@ -143,4 +143,31 @@ public class MisionRA : MonoBehaviour
     }
 
     void Mensaje(string texto) { if (estado != null) estado.text = texto; }
+
+    // ---------------------------------------------------------------- Materiales para el móvil
+    // En algunos móviles URP/Lit no se dibuja (sus variantes no llegan al APK). Octavio y sus complementos
+    // usan en la RA un shader propio y sencillo de dibujos animados, que siempre está.
+    static Shader cartoon;
+    readonly Dictionary<Material, Material> convertidos = new Dictionary<Material, Material>();
+
+    void LateUpdate()
+    {
+        if (cartoon == null) cartoon = Resources.Load<Shader>("Shaders/CartoonSimple");
+        if (cartoon == null || !cartoon.isSupported) return;
+        foreach (var r in octavio.GetComponentsInChildren<Renderer>())
+        {
+            var m = r.sharedMaterial;
+            if (m == null || m.shader == cartoon) continue;
+            if (!convertidos.TryGetValue(m, out var nuevo))
+            {
+                nuevo = new Material(cartoon) { name = m.name + " (RA)" };
+                nuevo.SetColor("_BaseColor", m.HasProperty("_BaseColor") ? m.GetColor("_BaseColor") : m.color);
+                if (m.HasProperty("_EmissionColor") && m.IsKeywordEnabled("_EMISSION")) nuevo.SetColor("_EmissionColor", m.GetColor("_EmissionColor"));
+                if (m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null) nuevo.SetTexture("_BaseMap", m.GetTexture("_BaseMap"));
+                if (m.HasProperty("_Cull")) nuevo.SetFloat("_Cull", m.GetFloat("_Cull"));
+                convertidos[m] = nuevo;
+            }
+            r.sharedMaterial = nuevo;
+        }
+    }
 }
