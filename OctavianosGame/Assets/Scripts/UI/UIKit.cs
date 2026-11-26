@@ -29,7 +29,9 @@ public static class UIKit
     public static void Estilo(Text t, int tam, FontStyle estilo)
     {
         t.font = Font;
-        t.fontSize = EsFredoka ? Mathf.RoundToInt(tam * 0.92f) : tam;
+        // En el móvil la letra se veía pequeña: allí un poco más grande
+        float factor = !EsFredoka ? 1f : Application.isMobilePlatform ? 1.18f : 0.92f;
+        t.fontSize = Mathf.RoundToInt(tam * factor);
         t.fontStyle = EsFredoka && estilo == FontStyle.Bold ? FontStyle.Normal : EsFredoka && estilo == FontStyle.BoldAndItalic ? FontStyle.Italic : estilo;
     }
 

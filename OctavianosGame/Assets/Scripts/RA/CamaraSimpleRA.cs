@@ -1,6 +1,7 @@
 using System.Collections;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.Rendering.Universal;
 using UnityEngine.UI;
 #if UNITY_ANDROID
 using UnityEngine.Android;
@@ -23,6 +24,8 @@ public class CamaraSimpleRA : MonoBehaviour
     RawImage fondo;
     AspectRatioFitter ajuste;
     Canvas canvas;
+    Camera camFondo;
+    const int CapaFondo = 5;   // capa "UI": solo la ve la cámara del fondo
     Quaternion recentrado = Quaternion.identity;
     bool hayGiroscopio;
 
@@ -35,13 +38,30 @@ public class CamaraSimpleRA : MonoBehaviour
         cam.clearFlags = CameraClearFlags.SolidColor;
         cam.backgroundColor = Color.black;
 
-        // Fondo: un canvas pegado a la cámara, lo más lejos posible, detrás de todo
+        // Fondo en su PROPIA cámara (base) y la cámara principal encima (overlay, apilada).
+        // Así Octavio siempre se dibuja delante de la imagen de la cámara, en cualquier móvil.
+        camFondo = new GameObject("CamaraFondo").AddComponent<Camera>();
+        camFondo.transform.SetParent(transform, false);
+        camFondo.clearFlags = CameraClearFlags.SolidColor;
+        camFondo.backgroundColor = Color.black;
+        camFondo.cullingMask = 1 << CapaFondo;
+        camFondo.nearClipPlane = 0.1f; camFondo.farClipPlane = 20f;
+        camFondo.depth = cam.depth - 1f;
+        cam.cullingMask &= ~(1 << CapaFondo);
+        var datosFondo = camFondo.GetUniversalAdditionalCameraData();
+        var datosCam = cam.GetUniversalAdditionalCameraData();
+        datosFondo.renderType = CameraRenderType.Base;
+        datosCam.renderType = CameraRenderType.Overlay;
+        datosFondo.cameraStack.Add(cam);
+
         canvas = new GameObject("FondoCamara").AddComponent<Canvas>();
+        canvas.gameObject.layer = CapaFondo;
         canvas.renderMode = RenderMode.ScreenSpaceCamera;
-        canvas.worldCamera = cam;
-        canvas.planeDistance = cam.farClipPlane * 0.95f;
+        canvas.worldCamera = camFondo;
+        canvas.planeDistance = 10f;
         canvas.sortingOrder = -100;
         fondo = new GameObject("Imagen").AddComponent<RawImage>();
+        fondo.gameObject.layer = CapaFondo;
         fondo.transform.SetParent(canvas.transform, false);
         var rt = fondo.rectTransform;
         rt.anchorMin = rt.anchorMax = new Vector2(0.5f, 0.5f);
@@ -113,6 +133,22 @@ public class CamaraSimpleRA : MonoBehaviour
     {
         var q = AttitudeSensor.current.attitude.ReadValue();
         return Quaternion.Euler(90f, 0f, 0f) * new Quaternion(q.x, q.y, -q.z, -q.w);
+    }
+
+    void OnDisable()
+    {
+        // Si se vuelve al modo completo (ARCore), la cámara principal vuelve a ser la base
+        var datosCam = GetComponent<Camera>().GetUniversalAdditionalCameraData();
+        if (datosCam != null) datosCam.renderType = CameraRenderType.Base;
+        if (camFondo != null) camFondo.gameObject.SetActive(false);
+    }
+
+    void OnEnable()
+    {
+        if (camFondo == null) return;
+        camFondo.gameObject.SetActive(true);
+        var datosCam = GetComponent<Camera>().GetUniversalAdditionalCameraData();
+        if (datosCam != null) datosCam.renderType = CameraRenderType.Overlay;
     }
 
     void OnDestroy()

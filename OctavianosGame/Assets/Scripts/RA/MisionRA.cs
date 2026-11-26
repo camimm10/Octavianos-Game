@@ -62,7 +62,7 @@ public class MisionRA : MonoBehaviour
         else
         {
             PonerDelante();
-            Mensaje("Modo cámara (tu móvil no tiene ARCore).\nGira el móvil para mirar alrededor. Toca la pantalla para traer a Octavio delante.");
+            Mensaje("Modo cámara (tu móvil no tiene ARCore).\nOctavio te acompaña: gira el móvil y te seguirá.");
         }
         listo = true;
     }
@@ -70,6 +70,17 @@ public class MisionRA : MonoBehaviour
     void Update()
     {
         if (!listo) return;
+
+        // Modo cámara: Octavio te acompaña siempre delante, flotando un poco (así nunca se pierde)
+        if (ModoRA.Actual != ModoRA.Tipo.Completa && Camera.main != null)
+        {
+            if (!octavio.gameObject.activeSelf) octavio.gameObject.SetActive(true);
+            var cam = Camera.main.transform;
+            Vector3 delante = cam.forward; delante.y = 0f;
+            if (delante.sqrMagnitude < 0.01f) delante = Vector3.forward;
+            var objetivo = cam.position + delante.normalized * 1.2f + Vector3.down * 0.3f + Vector3.up * Mathf.Sin(Time.time * 1.5f) * 0.04f;
+            octavio.position = Vector3.Lerp(octavio.position, objetivo, 1f - Mathf.Exp(-3f * Time.deltaTime));
+        }
 
         // Que Octavio mire siempre hacia ti
         if (octavio.gameObject.activeSelf)
@@ -132,4 +143,31 @@ public class MisionRA : MonoBehaviour
     }
 
     void Mensaje(string texto) { if (estado != null) estado.text = texto; }
+
+    // ---------------------------------------------------------------- Materiales para el móvil
+    // En algunos móviles URP/Lit no se dibuja (sus variantes no llegan al APK). Octavio y sus complementos
+    // usan en la RA un shader propio y sencillo de dibujos animados, que siempre está.
+    static Shader cartoon;
+    readonly Dictionary<Material, Material> convertidos = new Dictionary<Material, Material>();
+
+    void LateUpdate()
+    {
+        if (cartoon == null) cartoon = Resources.Load<Shader>("Shaders/CartoonSimple");
+        if (cartoon == null || !cartoon.isSupported) return;
+        foreach (var r in octavio.GetComponentsInChildren<Renderer>())
+        {
+            var m = r.sharedMaterial;
+            if (m == null || m.shader == cartoon) continue;
+            if (!convertidos.TryGetValue(m, out var nuevo))
+            {
+                nuevo = new Material(cartoon) { name = m.name + " (RA)" };
+                nuevo.SetColor("_BaseColor", m.HasProperty("_BaseColor") ? m.GetColor("_BaseColor") : m.color);
+                if (m.HasProperty("_EmissionColor") && m.IsKeywordEnabled("_EMISSION")) nuevo.SetColor("_EmissionColor", m.GetColor("_EmissionColor"));
+                if (m.HasProperty("_BaseMap") && m.GetTexture("_BaseMap") != null) nuevo.SetTexture("_BaseMap", m.GetTexture("_BaseMap"));
+                if (m.HasProperty("_Cull")) nuevo.SetFloat("_Cull", m.GetFloat("_Cull"));
+                convertidos[m] = nuevo;
+            }
+            r.sharedMaterial = nuevo;
+        }
+    }
 }
