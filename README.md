@@ -9,7 +9,7 @@ Proyecto de **Lenguajes y Paradigmas** (UCJC, curso 2026-2027), dentro del unive
 - Paloma Domínguez Montero
 - Diego Andrés Boscán Guillamón
 
-📊 [Presentación del proyecto](Documentacion/LosOctavianos.pptx)
+⬇️ **[Descargar el juego (PC y Android)](https://github.com/camimm10/Octavianos-Game/releases/latest)** · 📊 [Presentación del proyecto](Documentacion/LosOctavianos.pptx)
 
 ---
 
@@ -98,8 +98,10 @@ Sin internet ni cuentas: los dos se hablan **en Destello**.
 
 ## Probarlo
 
-- **PC (Windows):** ejecuta `LosOctavianos.exe`, que necesita la carpeta `LosOctavianos_Data` a su lado.
-- **Móvil (Android):** instala `LosOctavianos.apk` y acepta los permisos de cámara, ubicación y actividad física.
+Las descargas están en **[Releases](https://github.com/camimm10/Octavianos-Game/releases/latest)**.
+
+- **PC (Windows):** descarga `LosOctavianos-Windows.zip`, descomprímelo y abre `LosOctavianos/LosOctavianos.exe`. Si Windows avisa, pulsa «Más información» y luego «Ejecutar de todas formas».
+- **Móvil (Android):** descarga `LosOctavianos.apk` en el móvil, instálalo y acepta los permisos de cámara, ubicación y actividad física.
 - **Abrir el proyecto:** Unity **6.3 LTS (6000.3.29f1)**, con URP. Abre la carpeta `OctavianosGame` desde Unity Hub.
   - Para compilar: menú **Octavianos → Construir exe de Windows** o **Construir APK de Android**.
 
