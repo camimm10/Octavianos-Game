@@ -144,9 +144,13 @@ public static class DecoradoCartoon
     /// <summary>Al humano de cápsulas le pone cara de dibujo animado (ojos, nariz, boca y pelo), manos y zapatos.</summary>
     static void Humanos()
     {
+        // Modelo de personaje de Kenney (CC0) en Resources/Personajes; si no estuviera, se usa la cara hecha por código
+        var modelo = Resources.Load<GameObject>("Personajes/character-male-f");
         foreach (var t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include, FindObjectsSortMode.None))
         {
             if (t.name != "Humano") continue;
+            if (t.Find("PersonajeKenney") != null) continue;
+            if (modelo != null && PonerModelo(t, modelo)) continue;
             var cabeza = t.Find("Cabeza");
             if (cabeza == null || cabeza.Find("Pelo") != null) continue;
             var piel = cabeza.GetComponent<Renderer>().sharedMaterial;
@@ -167,6 +171,35 @@ public static class DecoradoCartoon
             Bolita(cabeza, "Boca", new Vector3(0f, -0.2f, 0.45f), new Vector3(0.18f, 0.05f, 0.06f), oscuro);
             Bolita(cabeza, "Pelo", new Vector3(0f, 0.22f, -0.1f), new Vector3(1.08f, 0.76f, 1.08f), pelo);
         }
+    }
+
+    /// <summary>Pone el personaje de Kenney ocupando el mismo hueco que el humano de cápsulas (de los pies a la cabeza).</summary>
+    static bool PonerModelo(Transform humano, GameObject modelo)
+    {
+        var g = Object.Instantiate(modelo);   // primero suelto, para medirlo bien
+        g.name = "PersonajeKenney";
+        g.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+        g.transform.localScale = Vector3.one;
+        var rends = g.GetComponentsInChildren<Renderer>();
+        if (rends.Length == 0) { Object.Destroy(g); return false; }
+        var b = rends[0].bounds;
+        foreach (var r in rends) b.Encapsulate(r.bounds);
+        if (b.size.y < 1e-4f) { Object.Destroy(g); return false; }
+        // El humano de cápsulas iba de y = -1,4 (pies) a y = 1,07 (coronilla)
+        const float pies = -1.4f, alto = 2.47f;
+        float k = alto / b.size.y;
+        g.transform.SetParent(humano, false);
+        g.transform.localRotation = Quaternion.identity;
+        g.transform.localScale = Vector3.one * k;
+        g.transform.localPosition = new Vector3(-b.center.x * k, pies - b.min.y * k, -b.center.z * k);
+        var anim = g.GetComponentInChildren<Animator>();
+        if (anim != null) anim.enabled = false;   // quieto (el humano está inconsciente)
+        foreach (var nombre in new[] { "Torso", "Cabeza", "BrazoIzq", "BrazoDer", "PiernaIzq", "PiernaDer" })
+        {
+            var x = humano.Find(nombre);
+            if (x != null && x.GetComponent<Renderer>() != null) x.GetComponent<Renderer>().enabled = false;
+        }
+        return true;
     }
 
     static readonly Dictionary<string, Material> tonos = new Dictionary<string, Material>();

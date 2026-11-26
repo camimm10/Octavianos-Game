@@ -59,7 +59,7 @@ public class MenuPrincipal : MonoBehaviour
         bObjetos = Juego.Boton(principal.transform, "Objetos del móvil", 0.22f, new Color(0.65f, 0.55f, 0.95f));
         bSalir = Juego.Boton(principal.transform, "Salir", 0.12f, new Color(0.5f, 0.5f, 0.55f));
         UIKit.Label(principal.transform, "Equipo", new Vector2(0f, 0.02f), new Vector2(1f, 0.08f),
-            "Enzo Sánchez · Camila Montoya · Paloma Domínguez · Diego Boscán  —  Lenguajes y Paradigmas · UCJC", 22, new Color(1f, 1f, 1f, 0.45f), TextAnchor.MiddleCenter);
+            "Lenguajes y Paradigmas · UCJC", 22, new Color(1f, 1f, 1f, 0.45f), TextAnchor.MiddleCenter);
 
         // Selector de etapas
         selector = UIKit.Rect(canvas.transform, "Selector", Vector2.zero, Vector2.one).gameObject;
