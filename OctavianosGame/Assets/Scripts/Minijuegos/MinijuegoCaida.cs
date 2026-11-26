@@ -27,10 +27,20 @@ public class MinijuegoCaida : Minigame
     readonly List<float> drift = new List<float>();
 
     protected override string Title => "TENTÁCULOS · La caída";
+
+    protected override void AplicarNivel(int n)
+    {
+        duration = PorNivel(n, 16f, 20f, 24f);
+        spawnEvery = PorNivel(n, 0.75f, 0.55f, 0.45f);
+        lives = PorNivel(n, 5, 3, 2);
+        vidasMax = lives;
+    }
+    int vidasMax = 3;
+    protected override string Pista => "No te pegues a los bordes: desde el centro puedes esquivar hacia los dos lados. Muévete pronto, no en el último momento.";
     protected override string Instructions =>
         "¡La erupción os ha lanzado a más de cien metros de altura!\n" +
         "Muévete con A / D o con las flechas para esquivar gaviotas y rocas mientras caéis.\n" +
-        "Tienes 3 vidas. Aguanta hasta llegar al agua.";
+        "Tienes " + lives + " vidas. Aguanta hasta llegar al agua.";
     protected override Color AccentColor => StageFlow.Tentaculos;
 
     protected override void Build()
@@ -162,7 +172,7 @@ public class MinijuegoCaida : Minigame
     {
         SetProgress(fill, t / duration);
         heightText.text = $"Altura: {Mathf.CeilToInt(Mathf.Max(0f, 100f * (1f - t / duration)))} m";
-        livesText.text = "Vidas: " + new string('●', Mathf.Max(0, lives)) + new string('○', Mathf.Max(0, 3 - lives));
+        livesText.text = "Vidas: " + new string('●', Mathf.Max(0, lives)) + new string('○', Mathf.Max(0, vidasMax - lives));
     }
 
     static bool Overlaps(RectTransform a, RectTransform b, float shrink)

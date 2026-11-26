@@ -21,6 +21,34 @@ public abstract class Minigame : MonoBehaviour
     protected abstract void Build();
     protected abstract IEnumerator Play();
 
+    // ---------------------------------------------------------------- Dificultad y pistas
+
+    /// <summary>0 = Fácil, 1 = Normal (la de siempre), 2 = Difícil. Se recuerda entre partidas.</summary>
+    public static int Nivel
+    {
+        get => Mathf.Clamp(PlayerPrefs.GetInt("Dificultad", 1), 0, 2);
+        set { PlayerPrefs.SetInt("Dificultad", Mathf.Clamp(value, 0, 2)); PlayerPrefs.Save(); }
+    }
+    public static readonly string[] NombresNivel = { "Fácil", "Normal", "Difícil" };
+    static readonly Color[] ColoresNivel = { new Color(0.35f, 0.85f, 0.5f), new Color(0.35f, 0.65f, 1f), new Color(0.95f, 0.4f, 0.4f) };
+    public const int PrecioPista = 2;
+
+    /// <summary>Algas que da superar la prueba según la dificultad.</summary>
+    public static int Premio(int nivel) => nivel == 0 ? 2 : nivel == 2 ? 5 : Algas.PorPrueba;
+
+    /// <summary>¿Esta prueba tiene niveles? (las de programar en Destello ya traen su propia pista).</summary>
+    protected virtual bool TieneNiveles => true;
+    /// <summary>Cada minijuego ajusta aquí sus números (vidas, tiempo, velocidad…). El nivel 1 deja los de siempre.</summary>
+    protected virtual void AplicarNivel(int nivel) { }
+    /// <summary>Pista que se puede comprar con algas doradas en Difícil.</summary>
+    protected virtual string Pista => null;
+
+    /// <summary>Elige un valor según el nivel: (fácil, normal, difícil).</summary>
+    protected static T PorNivel<T>(int nivel, T facil, T normal, T dificil) => nivel == 0 ? facil : nivel == 2 ? dificil : normal;
+
+    int nivelJugado = 1;
+    bool pistaComprada;
+
     public void Begin(Action<bool> onEnd)
     {
         this.onEnd = onEnd;
@@ -31,23 +59,92 @@ public abstract class Minigame : MonoBehaviour
 
     IEnumerator Flow()
     {
-        // Pantalla de instrucciones
+        // Pantalla de instrucciones (con la dificultad y, en Difícil, la pista)
+        nivelJugado = TieneNiveles ? Nivel : 1;
+        AplicarNivel(nivelJugado);
         var intro = UIKit.Rect(root, "Intro", Vector2.zero, Vector2.one);
-        UIKit.Label(intro, "Titulo", new Vector2(0.1f, 0.62f), new Vector2(0.9f, 0.78f), Title, 64, AccentColor, TextAnchor.MiddleCenter, FontStyle.Bold);
-        UIKit.Label(intro, "Texto", new Vector2(0.15f, 0.32f), new Vector2(0.85f, 0.62f), Instructions, 36, Color.white);
-        UIKit.Label(intro, "Empezar", new Vector2(0.1f, 0.18f), new Vector2(0.9f, 0.26f),
-                    "Pulsa ESPACIO para empezar   ·   ESC para volver", 30, new Color(1f, 1f, 1f, 0.7f), TextAnchor.MiddleCenter, FontStyle.Italic);
+        UIKit.Label(intro, "Titulo", new Vector2(0.1f, 0.66f), new Vector2(0.9f, 0.8f), Title, 64, AccentColor, TextAnchor.MiddleCenter, FontStyle.Bold);
+        var texto = UIKit.Label(intro, "Texto", new Vector2(0.12f, 0.38f), new Vector2(0.88f, 0.66f), Instructions, 34, Color.white);
+        var botonesNivel = new RectTransform[3];
+        var fondosNivel = new Image[3];
+        Text pistaTexto = null, pistaBoton = null;
+        RectTransform bPista = null;
+        if (TieneNiveles)
+        {
+            UIKit.Label(intro, "Dificultad", new Vector2(0.1f, 0.33f), new Vector2(0.9f, 0.37f), "Dificultad  (teclas F1, F2, F3 o clic)", 24, new Color(1f, 1f, 1f, 0.6f));
+            for (int i = 0; i < 3; i++)
+            {
+                float x0 = 0.26f + i * 0.165f;
+                fondosNivel[i] = UIKit.Panel(intro, "Nivel" + i, new Vector2(x0, 0.255f), new Vector2(x0 + 0.15f, 0.325f), Color.white);
+                UIKit.Label(fondosNivel[i].transform, "Texto", Vector2.zero, Vector2.one, NombresNivel[i], 32, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                botonesNivel[i] = fondosNivel[i].rectTransform;
+            }
+            if (!string.IsNullOrEmpty(Pista))
+            {
+                var img = UIKit.Panel(intro, "Pista", new Vector2(0.33f, 0.175f), new Vector2(0.67f, 0.235f), new Color(1f, 0.8f, 0.3f, 0.3f));
+                bPista = img.rectTransform;
+                pistaBoton = UIKit.Label(img.transform, "Texto", Vector2.zero, Vector2.one, "", 28, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+                pistaTexto = UIKit.Label(intro, "PistaTexto", new Vector2(0.1f, 0.02f), new Vector2(0.9f, 0.1f), "", 28, new Color(1f, 0.88f, 0.5f));
+            }
+        }
+        UIKit.Label(intro, "Empezar", new Vector2(0.1f, 0.1f), new Vector2(0.9f, 0.16f),
+                    "Pulsa ESPACIO o ENTER para empezar   ·   ESC para volver", 30, new Color(1f, 1f, 1f, 0.7f), TextAnchor.MiddleCenter, FontStyle.Italic);
+
+        void Pintar()
+        {
+            texto.text = Instructions;
+            for (int i = 0; i < 3; i++)
+                if (fondosNivel[i] != null)
+                    fondosNivel[i].color = i == nivelJugado ? ColoresNivel[i] * new Color(1f, 1f, 1f, 0.75f) : new Color(1f, 1f, 1f, 0.1f);
+            if (bPista != null)
+            {
+                bPista.gameObject.SetActive(nivelJugado == 2);
+                pistaBoton.text = pistaComprada ? "Pista comprada" : $"Comprar una pista  ({PrecioPista} algas · tecla P)";
+                pistaTexto.text = nivelJugado == 2 ? (pistaComprada ? "Pista: " + Pista : $"En Difícil puedes comprar una pista. Tienes {Algas.Cantidad} algas doradas.") : "";
+            }
+        }
+        Pintar();
         yield return null;
+        var kbI = UnityEngine.InputSystem.Keyboard.current;
         while (true)
         {
             if (UIKit.EscapePressed()) { Finish(false); yield break; }
-            if (UIKit.ConfirmPressed()) break;
+            int elegido = -1;
+            for (int i = 0; i < 3; i++) if (botonesNivel[i] != null && UIKit.Clicked(botonesNivel[i])) elegido = i;
+            if (TieneNiveles && kbI != null)
+            {
+                if (kbI.f1Key.wasPressedThisFrame) elegido = 0;
+                if (kbI.f2Key.wasPressedThisFrame) elegido = 1;
+                if (kbI.f3Key.wasPressedThisFrame) elegido = 2;
+            }
+            bool quierePista = bPista != null && nivelJugado == 2 && !pistaComprada &&
+                               (UIKit.Clicked(bPista) || (kbI != null && kbI.pKey.wasPressedThisFrame));
+            if (elegido >= 0)
+            {
+                nivelJugado = elegido; Nivel = elegido;
+                AplicarNivel(nivelJugado);
+                Pintar();
+            }
+            else if (quierePista)
+            {
+                if (Algas.Gastar(PrecioPista)) pistaComprada = true;
+                Pintar();
+                if (!pistaComprada) pistaTexto.text = $"Te faltan algas para la pista (cuesta {PrecioPista}). Gana más superando pruebas.";
+            }
+            else if (bPista != null && UIKit.Clicked(bPista)) { }
+            else if (kbI != null && (kbI.spaceKey.wasPressedThisFrame || kbI.enterKey.wasPressedThisFrame || kbI.eKey.wasPressedThisFrame)) break;
             yield return null;
         }
         Destroy(intro.gameObject);
         yield return null;
 
         Build();
+        // La pista comprada se queda abajo durante toda la prueba
+        if (pistaComprada)
+        {
+            var caja = UIKit.Panel(root, "Pista", new Vector2(0.1f, 0.01f), new Vector2(0.9f, 0.075f), new Color(0f, 0f, 0f, 0.55f));
+            UIKit.Label(caja.transform, "Texto", new Vector2(0.02f, 0f), new Vector2(0.98f, 1f), "Pista: " + Pista, 24, new Color(1f, 0.88f, 0.5f));
+        }
         yield return Play();
     }
 
@@ -57,6 +154,9 @@ public abstract class Minigame : MonoBehaviour
         var veil = UIKit.Panel(root, "Final", Vector2.zero, Vector2.one, new Color(0f, 0f, 0f, 0.6f));
         UIKit.Label(veil.transform, "Mensaje", new Vector2(0.1f, 0.4f), new Vector2(0.9f, 0.6f), message, 56,
                     win ? new Color(0.5f, 1f, 0.6f) : new Color(1f, 0.6f, 0.5f), TextAnchor.MiddleCenter, FontStyle.Bold);
+        if (win)
+            UIKit.Label(veil.transform, "Algas", new Vector2(0.1f, 0.3f), new Vector2(0.9f, 0.38f), $"+{Premio(nivelJugado)} algas doradas para el Armario de Octavio", 34,
+                        new Color(1f, 0.84f, 0.35f), TextAnchor.MiddleCenter, FontStyle.Bold);
         yield return new WaitForSeconds(2f);
         Finish(win);
     }
@@ -65,6 +165,7 @@ public abstract class Minigame : MonoBehaviour
     {
         var cb = onEnd;
         onEnd = null;
+        if (win && cb != null) Algas.Sumar(Premio(nivelJugado));   // premio para el Armario de Octavio
         if (canvas != null) Destroy(canvas.gameObject);
         StopAllCoroutines();
         cb?.Invoke(win);

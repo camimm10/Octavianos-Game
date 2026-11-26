@@ -29,11 +29,21 @@ public class MinijuegoDestellos : Minigame
     Text status, livesText, roundText;
 
     protected override string Title => "CORAZÓN · Destellos de ayuda";
+
+    protected override void AplicarNivel(int n)
+    {
+        lives = PorNivel(n, 4, 3, 2);
+        vidasMax = lives;
+        flashOn = PorNivel(n, 0.7f, 0.55f, 0.42f);
+        flashOff = PorNivel(n, 0.3f, 0.25f, 0.18f);
+    }
+    int vidasMax = 3;
+    protected override string Pista => "Di los colores en voz alta mientras se encienden («rojo, azul, verde…»): así se recuerdan mucho mejor.";
     protected override string Instructions =>
         "Otros pulpos te miran desde las rocas.\n" +
         "Habla con ellos con tu piel: mira la secuencia de destellos\n" +
         "y repítela con las teclas 1, 2, 3 y 4 (o haciendo clic).\n" +
-        "Tienes 3 intentos.";
+        "Tienes " + lives + " intentos.";
     protected override Color AccentColor => new Color(1f, 0.55f, 0.75f);
 
     protected override void Build()
@@ -132,7 +142,7 @@ public class MinijuegoDestellos : Minigame
         pads[i].localScale = Vector3.one;
     }
 
-    void UpdateLives() => livesText.text = "Intentos: " + new string('●', Mathf.Max(0, lives)) + new string('○', Mathf.Max(0, 3 - lives));
+    void UpdateLives() => livesText.text = "Intentos: " + new string('●', Mathf.Max(0, lives)) + new string('○', Mathf.Max(0, vidasMax - lives));
 
     static Color Dim(Color c) => new Color(c.r * 0.35f, c.g * 0.35f, c.b * 0.35f, 1f);
 }

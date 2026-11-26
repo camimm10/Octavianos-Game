@@ -69,6 +69,8 @@ public class MinijuegoDestello : Minigame
     RectTransform fill;
 
     protected override string Title => "MENTE · El lenguaje de la luz";
+
+    protected override bool TieneNiveles => false;   // ya tiene su propia pista (tecla H)
     protected override string Instructions =>
         "Octavio puede hablar con luz: con la piel crea destellos de 4 colores, como las linternas de Destello.\n" +
         "Gira cada linterna con 1, 2, 3, 4 (o con clic): rojo ●  →  verde ■  →  azul ▲.\n" +

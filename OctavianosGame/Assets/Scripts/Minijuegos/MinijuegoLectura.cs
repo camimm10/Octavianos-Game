@@ -34,10 +34,17 @@ public class MinijuegoLectura : Minigame
     readonly Text[] textosBoton = new Text[3];
 
     protected override string Title => "MENTE · La escuela de la luz";
+
+    protected override void AplicarNivel(int n)
+    {
+        preguntas = PorNivel(n, 5, 6, 8);
+        vidas = PorNivel(n, 4, 3, 2);
+    }
+    protected override string Pista => "Rojo ● = 0, verde ■ = 1, azul ▲ = 2. Con varios destellos, el primero vale ×9, el segundo ×3 y el último ×1: súmalos.";
     protected override string Instructions =>
         "Los pequeños Octavianos quieren aprender a leer la luz.\n" +
         "Mira cada destello y elige qué significa con 1, 2, 3 (o con clic).\n" +
-        "Hay " + preguntas + " preguntas y tienes 3 vidas. ¡Recuerda: rojo ● = 0, verde ■ = 1, azul ▲ = 2!";
+        "Hay " + preguntas + " preguntas y tienes " + vidas + " vidas. ¡Recuerda: rojo ● = 0, verde ■ = 1, azul ▲ = 2!";
     protected override Color AccentColor => StageFlow.Mente;
 
     protected override void Build()

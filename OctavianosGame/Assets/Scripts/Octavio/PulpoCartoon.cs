@@ -47,9 +47,38 @@ public class PulpoCartoon : MonoBehaviour
         return pc;
     }
 
+    /// <summary>Crea un pulpo de dibujos animados nuevo (sin primitivas previas), p. ej. para la vista previa del armario.</summary>
+    public static PulpoCartoon Crear(Transform padre, Material piel)
+    {
+        var g = new GameObject("Cuerpo");
+        g.transform.SetParent(padre, false);
+        var pc = g.AddComponent<PulpoCartoon>();
+        pc.Construir(piel, piel, piel);
+        return pc;
+    }
+
+    // ---------------------------------------------------------------- Personalización (Armario de Octavio)
+
+    /// <summary>Forma del cuerpo (escala del manto). (1,1,1) = normal.</summary>
+    [System.NonSerialized] public Vector3 FormaCuerpo = Vector3.one;
+    /// <summary>Tamaño de los ojos (1 = normal) y su forma (ancho, alto).</summary>
+    [System.NonSerialized] public float EscalaOjos = 1f;
+    [System.NonSerialized] public Vector2 FormaOjos = Vector2.one;
+
+    public Transform Manto => manto;
+    public Transform OjoIzq => ojoI;
+    public Transform OjoDer => ojoD;
+    public Renderer[] Pupilas => new[] { pupilaI.GetComponent<Renderer>(), pupilaD.GetComponent<Renderer>() };
+    public Material MaterialPiel { get; private set; }
+    public Renderer[] RenderersPiel => renderersPiel.ToArray();
+    public Material MaterialNegro { get; private set; }
+    public static Mesh MallaEsferaCompartida(int res) => MallaEsfera(res);
+    public void MirarA(Transform t) => objetivoMirada = t;
+
     // ---------------------------------------------------------------- Construcción
 
     readonly List<Renderer> renderersPiel = new List<Renderer>();
+    Vector3 ojoBaseI, ojoBaseD;
     Transform manto, ojoI, ojoD, pupilaI, pupilaD;
     Vector3 pupilaBaseI, pupilaBaseD;
     Mesh mallaTentaculos;
@@ -74,6 +103,7 @@ public class PulpoCartoon : MonoBehaviour
         }
         var matBlanco = Copia(blanco, 0.9f, Color.white);
         var matNegro = Copia(negro, 0.92f, new Color(0.04f, 0.04f, 0.06f));
+        MaterialPiel = matPiel; MaterialNegro = matNegro;
 
         // Manto (cabeza)
         manto = Hijo("Manto", MallaManto(), matPiel).transform;
@@ -83,6 +113,7 @@ public class PulpoCartoon : MonoBehaviour
         ojoI = Ojo(-1, matBlanco, matNegro, out pupilaI);
         ojoD = Ojo(1, matBlanco, matNegro, out pupilaD);
         pupilaBaseI = pupilaI.localPosition; pupilaBaseD = pupilaD.localPosition;
+        ojoBaseI = ojoI.localPosition; ojoBaseD = ojoD.localPosition;
 
         // Boca sonriente
         Hijo("Boca", MallaBoca(), matNegro).transform.SetParent(manto, false);
@@ -159,7 +190,11 @@ public class PulpoCartoon : MonoBehaviour
 
         // Respira
         float r = 1f + 0.025f * Mathf.Sin(Time.time * 2.1f + fase * 0.1f);
-        manto.localScale = new Vector3(r, 2f - r, r);
+        manto.localScale = Vector3.Scale(new Vector3(r, 2f - r, r), FormaCuerpo);
+        // Los ojos siguen la forma del cuerpo; si son más grandes, se separan un poco
+        float sep = 1f + (EscalaOjos * FormaOjos.x - 1f) * 0.45f;
+        ojoI.localPosition = Vector3.Scale(ojoBaseI, new Vector3(FormaCuerpo.x * sep, FormaCuerpo.y, FormaCuerpo.z));
+        ojoD.localPosition = Vector3.Scale(ojoBaseD, new Vector3(FormaCuerpo.x * sep, FormaCuerpo.y, FormaCuerpo.z));
 
         ActualizarTentaculos(velocidadSuave);
         Parpadear();
@@ -181,7 +216,7 @@ public class PulpoCartoon : MonoBehaviour
                 proximoParpadeo = Time.time + (Random.value < 0.2f ? 0.25f : Random.Range(2.5f, 5.5f)); // a veces parpadeo doble
             }
         }
-        ojoI.localScale = ojoD.localScale = new Vector3(1f, escalaY, 1f);
+        ojoI.localScale = ojoD.localScale = new Vector3(EscalaOjos * FormaOjos.x, escalaY * EscalaOjos * FormaOjos.y, EscalaOjos);
     }
 
     void Mirar()
@@ -296,14 +331,16 @@ public class PulpoCartoon : MonoBehaviour
         }
         prof.Add(perfil[perfil.Length - 1]);
         const int radial = 36;
-        var v = new List<Vector3>(); var tri = new List<int>();
-        foreach (var q in prof)
+        var v = new List<Vector3>(); var tri = new List<int>(); var uv = new List<Vector2>();
+        for (int fi = 0; fi < prof.Count; fi++)
         {
+            var q = prof[fi];
             float inclinacion = -0.1f * Mathf.SmoothStep(0f, 1f, (q.x - 0.05f) / 0.75f);   // la cabeza se inclina hacia atrás
             for (int j = 0; j <= radial; j++)
             {
                 float a = j * Mathf.PI * 2f / radial;
                 v.Add(new Vector3(Mathf.Sin(a) * q.y, q.x, Mathf.Cos(a) * q.y + inclinacion));
+                uv.Add(new Vector2(j / (float)radial, fi / (float)(prof.Count - 1)));   // para los dibujos de la piel
             }
         }
         int fila = radial + 1;
@@ -314,7 +351,7 @@ public class PulpoCartoon : MonoBehaviour
                 tri.AddRange(new[] { a, d, c, a, b, d });
             }
         mantoCache = new Mesh { name = "Manto" };
-        mantoCache.SetVertices(v); mantoCache.SetTriangles(tri, 0);
+        mantoCache.SetVertices(v); mantoCache.SetTriangles(tri, 0); mantoCache.SetUVs(0, uv);
         mantoCache.RecalculateNormals(); mantoCache.RecalculateBounds();
         CoserCostura(mantoCache, fila, prof.Count);
         return mantoCache;

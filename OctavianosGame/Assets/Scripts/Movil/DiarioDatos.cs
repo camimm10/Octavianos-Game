@@ -50,6 +50,8 @@ public class DiarioDatos
     public List<EntradaDiario> entradas = new List<EntradaDiario>();
     public List<ItemColeccion> coleccion = new List<ItemColeccion>();
     public int algasDoradas;        // recompensas del Bolsillo
+    public int envioAlgas;          // nº del próximo código de algas para el PC
+    public int ultimoEnvio = -1;    // último código que se generó (para volver a enseñarlo)
 
     static DiarioDatos cache;
     static string Ruta => Path.Combine(Application.persistentDataPath, "diario.json");

@@ -55,10 +55,13 @@ public class MinijuegoOficios : Minigame
     readonly Text[] textosBoton = new Text[5];
 
     protected override string Title => "CORAZÓN · Un sitio para cada uno";
+
+    protected override void AplicarNivel(int n) => vidas = PorNivel(n, 4, 3, 2);
+    protected override string Pista => "La clave está en lo que dice cada vecino: aprender → Escuela, crecer despacio → Granja, piedra → Taller, comer juntos → Cocina, mayores → Casa de los mayores.";
     protected override string Instructions =>
         "Octópolis no son solo casas: son las personas que viven en ella.\n" +
         "Escucha a cada vecino y llévale al sitio donde será feliz (1 a 5 o clic).\n" +
-        "Cada sitio es para una sola persona. Tienes 3 vidas.";
+        "Cada sitio es para una sola persona. Tienes " + vidas + " vidas.";
     protected override Color AccentColor => StageFlow.Corazon;
 
     protected override void Build()

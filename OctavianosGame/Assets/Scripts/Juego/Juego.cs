@@ -59,7 +59,8 @@ public class Juego : MonoBehaviour
             DecoradoCartoon.Aplicar();
             // Objetos conseguidos dibujando en el móvil (códigos Destello)
             var octavio = FindAnyObjectByType<OctavioSwimController>();
-            if (octavio != null) ObjetosOctavio.Equipar(octavio.gameObject);
+            if (octavio != null) Armario.Vestir(octavio.gameObject);   // lo comprado en el Armario de Octavio
+        if (octavio != null) ObjetosOctavio.Equipar(octavio.gameObject);
             if (octavio != null) LimitesZona.Poner(octavio.gameObject);   // que no se pierda nadando hacia la oscuridad
         }
         if (n >= 0) musica.Tocar((MusicaProcedural.Ambiente)(n + 1));

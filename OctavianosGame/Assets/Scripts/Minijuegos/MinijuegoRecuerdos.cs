@@ -28,11 +28,15 @@ public class MinijuegoRecuerdos : Minigame
     Text status, triesText;
 
     protected override string Title => "CORAZÓN · Encontrar el valor";
+
+    protected override void AplicarNivel(int n) { tries = PorNivel(n, 4, 3, 2); vidasMax = tries; }
+    int vidasMax = 3;
+    protected override string Pista => "Es la historia de Octavio en orden: perderse → Brisa le encuentra → cae el humano → Brisa huye → llega al géiser.";
     protected override string Instructions =>
         "Octavio tiene miedo de saltar al géiser.\n" +
         "Para encontrar el valor, recuerda cómo has llegado hasta aquí:\n" +
         "pulsa los recuerdos en orden, del primero al último (clic o teclas 1-5).\n" +
-        "Si te equivocas 3 veces, el miedo gana.";
+        "Si te equivocas " + tries + " veces, el miedo gana.";
     protected override Color AccentColor => StageFlow.Corazon;
 
     protected override void Build()
@@ -129,5 +133,5 @@ public class MinijuegoRecuerdos : Minigame
         return true;
     }
 
-    void UpdateTries() => triesText.text = "Intentos: " + new string('●', Mathf.Max(0, tries)) + new string('○', Mathf.Max(0, 3 - tries));
+    void UpdateTries() => triesText.text = "Intentos: " + new string('●', Mathf.Max(0, tries)) + new string('○', Mathf.Max(0, vidasMax - tries));
 }

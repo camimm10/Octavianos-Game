@@ -15,7 +15,10 @@ public class MenuPrincipal : MonoBehaviour
     static readonly Color[] LuzColor = { new Color(0.95f, 0.25f, 0.25f), new Color(0.3f, 0.9f, 0.4f), new Color(0.35f, 0.55f, 1f) };
 
     GameObject principal, selector, objetos;
-    RectTransform bNueva, bContinuar, bElegir, bObjetos, bSalir, bVolver, bVolverObj, bBorrar;
+    RectTransform bNueva, bContinuar, bElegir, bObjetos, bArmario, bSalir, bVolver, bVolverObj, bBorrar;
+    Text algasMenu;
+    ArmarioUI armario;
+    bool codigoCompleto;
     readonly List<RectTransform> bLuces = new List<RectTransform>();
     readonly List<Image> huecos = new List<Image>();
     readonly List<int> codigo = new List<int>();
@@ -52,12 +55,16 @@ public class MenuPrincipal : MonoBehaviour
         // Pantalla principal
         principal = UIKit.Rect(canvas.transform, "Principal", Vector2.zero, Vector2.one).gameObject;
         int alcanzada = Juego.EtapaAlcanzada;
-        bNueva = Juego.Boton(principal.transform, "Nueva partida", 0.52f, StageFlow.Mente);
-        bContinuar = Juego.Boton(principal.transform, alcanzada > 1 ? $"Continuar  (Etapa {alcanzada})" : "Continuar", 0.42f, StageFlow.Tentaculos);
+        bNueva = Juego.Boton(principal.transform, "Nueva partida", 0.545f, StageFlow.Mente);
+        bContinuar = Juego.Boton(principal.transform, alcanzada > 1 ? $"Continuar  (Etapa {alcanzada})" : "Continuar", 0.452f, StageFlow.Tentaculos);
         if (alcanzada <= 1) bContinuar.GetComponent<Image>().color = new Color(0.4f, 0.4f, 0.45f, 0.2f);
-        bElegir = Juego.Boton(principal.transform, "Elegir etapa", 0.32f, StageFlow.Corazon);
-        bObjetos = Juego.Boton(principal.transform, "Objetos del móvil", 0.22f, new Color(0.65f, 0.55f, 0.95f));
-        bSalir = Juego.Boton(principal.transform, "Salir", 0.12f, new Color(0.5f, 0.5f, 0.55f));
+        bElegir = Juego.Boton(principal.transform, "Elegir etapa", 0.359f, StageFlow.Corazon);
+        bArmario = Juego.Boton(principal.transform, "Armario de Octavio", 0.266f, new Color(1f, 0.8f, 0.3f));
+        bObjetos = Juego.Boton(principal.transform, "Objetos del móvil", 0.173f, new Color(0.65f, 0.55f, 0.95f));
+        bSalir = Juego.Boton(principal.transform, "Salir", 0.08f, new Color(0.5f, 0.5f, 0.55f));
+        algasMenu = UIKit.Label(principal.transform, "Algas", new Vector2(0.66f, 0.27f), new Vector2(0.95f, 0.35f), "", 30,
+            new Color(1f, 0.84f, 0.35f), TextAnchor.MiddleLeft, FontStyle.Bold);
+        ActualizarAlgasMenu();
         UIKit.Label(principal.transform, "Equipo", new Vector2(0f, 0.02f), new Vector2(1f, 0.08f),
             "Lenguajes y Paradigmas · UCJC", 22, new Color(1f, 1f, 1f, 0.45f), TextAnchor.MiddleCenter);
 
@@ -74,7 +81,10 @@ public class MenuPrincipal : MonoBehaviour
         selector.SetActive(false);
 
         CrearPantallaObjetos(canvas.transform);
+        armario = ArmarioUI.Crear(canvas.transform, () => { principal.SetActive(true); ActualizarAlgasMenu(); });
     }
+
+    void ActualizarAlgasMenu() => algasMenu.text = $"{Algas.Cantidad} algas doradas";
 
     // ---------------------------------------------------------------- Objetos del móvil (códigos Destello)
 
@@ -83,10 +93,10 @@ public class MenuPrincipal : MonoBehaviour
         objetos = UIKit.Rect(canvas, "Objetos", Vector2.zero, Vector2.one).gameObject;
         UIKit.Panel(objetos.transform, "Tapa", new Vector2(0f, 0f), new Vector2(1f, 0.64f), new Color(0.02f, 0.09f, 0.14f, 1f));
         UIKit.Label(objetos.transform, "Ayuda", new Vector2(0.15f, 0.585f), new Vector2(0.85f, 0.64f),
-            "Escribe el código de 4 linternas que te ha dado la app del móvil al dibujar una forma.\nTeclas 1 = ●   2 = ■   3 = ▲   ·   Retroceso para borrar", 28, Color.white);
-        for (int i = 0; i < 4; i++)
+            "Escribe el código de linternas de la app del móvil: 4 para un complemento, 7 para pasar algas doradas (empieza por ● ●).\nTeclas 1 = ●   2 = ■   3 = ▲   ·   Retroceso para borrar", 28, Color.white);
+        for (int i = 0; i < 7; i++)
         {
-            var h = UIKit.PixelImage(objetos.transform, "Hueco" + i, new Vector2(-240f + i * 160f, 20f), new Vector2(110f, 110f), new Color(1f, 1f, 1f, 0.08f), UIKit.Circle);
+            var h = UIKit.PixelImage(objetos.transform, "Hueco" + i, new Vector2(-450f + i * 150f, 20f), new Vector2(105f, 105f), new Color(1f, 1f, 1f, i < 4 ? 0.08f : 0.04f), UIKit.Circle);
             var s = UIKit.PixelImage(h, "Simbolo", Vector2.zero, new Vector2(70f, 70f), Color.clear);
             huecos.Add(s.GetComponent<Image>());
         }
@@ -119,7 +129,7 @@ public class MenuPrincipal : MonoBehaviour
 
     void ActualizarObjetos()
     {
-        for (int i = 0; i < 4; i++)
+        for (int i = 0; i < huecos.Count; i++)
         {
             bool hay = i < codigo.Count;
             huecos[i].color = hay ? ObjetosOctavio.ColorLuz[codigo[i]] : Color.clear;
@@ -134,11 +144,24 @@ public class MenuPrincipal : MonoBehaviour
 
     void PulsarLuz(int d)
     {
-        if (codigo.Count >= 4) codigo.Clear();
+        if (codigoCompleto || codigo.Count >= 7) { codigo.Clear(); codigoCompleto = false; }
         codigo.Add(d);
         mensajeObj.text = "";
-        if (codigo.Count == 4)
+        if (ObjetosOctavio.EmpiezaAlgas(codigo))
         {
+            if (codigo.Count == 2) mensajeObj.text = "Código de algas doradas: faltan 5 linternas.";
+            if (codigo.Count == 7)
+            {
+                codigoCompleto = true;
+                int n = Algas.Canjear(codigo);
+                mensajeObj.text = n > 0 ? $"¡+{n} algas doradas! Ya tienes {Algas.Cantidad}. Úsalas en el «Armario de Octavio»."
+                                : n == 0 ? "Ese código de algas ya se ha usado. Pide otro en la app del móvil."
+                                : "Ese código de algas no es válido. Revisa las linternas.";
+            }
+        }
+        else if (codigo.Count == 4)
+        {
+            codigoCompleto = true;
             var o = ObjetosOctavio.PorCodigo(codigo);
             if (o == null) mensajeObj.text = "Ese código no existe. Revisa las linternas e inténtalo otra vez.";
             else if (!ObjetosOctavio.Desbloquear(o.id)) mensajeObj.text = $"Octavio ya tiene: {o.nombre}.";
@@ -166,6 +189,7 @@ public class MenuPrincipal : MonoBehaviour
             if (UIKit.Clicked(bNueva)) Juego.CargarEtapa(1);
             else if (UIKit.Clicked(bContinuar) && Juego.EtapaAlcanzada > 1) Juego.CargarEtapa(Juego.EtapaAlcanzada);
             else if (UIKit.Clicked(bElegir)) { principal.SetActive(false); selector.SetActive(true); }
+            else if (UIKit.Clicked(bArmario)) { principal.SetActive(false); armario.Abrir(); }
             else if (UIKit.Clicked(bObjetos)) { principal.SetActive(false); objetos.SetActive(true); codigo.Clear(); mensajeObj.text = ""; ActualizarObjetos(); }
             else if (UIKit.Clicked(bSalir)) Juego.Salir();
         }
@@ -177,11 +201,12 @@ public class MenuPrincipal : MonoBehaviour
             else if ((kb != null && kb.backspaceKey.wasPressedThisFrame) || UIKit.Clicked(bBorrar))
             {
                 if (codigo.Count > 0) codigo.RemoveAt(codigo.Count - 1);
+                codigoCompleto = false;
                 mensajeObj.text = ""; ActualizarObjetos();
             }
-            else if (UIKit.Clicked(bVolverObj) || (kb != null && kb.escapeKey.wasPressedThisFrame)) { objetos.SetActive(false); principal.SetActive(true); }
+            else if (UIKit.Clicked(bVolverObj) || (kb != null && kb.escapeKey.wasPressedThisFrame)) { objetos.SetActive(false); principal.SetActive(true); ActualizarAlgasMenu(); }
         }
-        else
+        else if (selector.activeSelf)
         {
             int n = UIKit.NumberPressed() + 1; // NumberPressed devuelve 0 para la tecla 1
             for (int i = 0; i < bEtapas.Count; i++) if (UIKit.Clicked(bEtapas[i])) n = i + 1;

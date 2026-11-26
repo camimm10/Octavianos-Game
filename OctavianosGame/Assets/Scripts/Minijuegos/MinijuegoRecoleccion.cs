@@ -38,6 +38,14 @@ public class MinijuegoRecoleccion : Minigame
     static readonly Color OctavioColor = new Color(0.85f, 0.45f, 0.35f);
 
     protected override string Title => "TENTÁCULOS · La gran recolección";
+
+    protected override void AplicarNivel(int n)
+    {
+        goal = PorNivel(n, 15, 20, 24);
+        crabs = PorNivel(n, 3, 4, 6);
+        crabSpeed = PorNivel(n, 150f, 170f, 205f);
+    }
+    protected override string Pista => "Ve siempre a por el alga más cercana y no persigas las que tienen un cangrejo al lado: enseguida aparecen otras.";
     protected override string Instructions =>
         "Llega la marea fría y la colonia necesita algas para el invierno.\n" +
         "Nada con W A S D o con las flechas y recoge " + goal + " algas antes de que se acabe el tiempo.\n" +

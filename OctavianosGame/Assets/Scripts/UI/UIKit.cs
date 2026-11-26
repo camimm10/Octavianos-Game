@@ -11,7 +11,27 @@ public static class UIKit
     static Font font;
     static Sprite circle, triangle;
 
-    public static Font Font => font != null ? font : (font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf"));
+    /// <summary>Letra del juego: Fredoka (redondeada, licencia OFL) con los símbolos de Destello añadidos.</summary>
+    public static Font Font
+    {
+        get
+        {
+            if (font != null) return font;
+            font = Resources.Load<Font>("Fuentes/Fredoka");
+            EsFredoka = font != null;
+            if (font == null) font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+            return font;
+        }
+    }
+    public static bool EsFredoka { get; private set; }
+
+    /// <summary>Fredoka ya es gruesa: la negrita falsa la emborrona, y es algo más ancha que Arial.</summary>
+    public static void Estilo(Text t, int tam, FontStyle estilo)
+    {
+        t.font = Font;
+        t.fontSize = EsFredoka ? Mathf.RoundToInt(tam * 0.92f) : tam;
+        t.fontStyle = EsFredoka && estilo == FontStyle.Bold ? FontStyle.Normal : EsFredoka && estilo == FontStyle.BoldAndItalic ? FontStyle.Italic : estilo;
+    }
 
     /// <summary>Sprite circular generado en memoria (para pulpos, botones redondos…).</summary>
     public static Sprite Circle
@@ -95,12 +115,10 @@ public static class UIKit
                              Color color, TextAnchor anchor = TextAnchor.MiddleCenter, FontStyle style = FontStyle.Normal)
     {
         var t = Rect(parent, name, min, max).gameObject.AddComponent<Text>();
-        t.font = Font;
         t.text = text;
-        t.fontSize = size;
+        Estilo(t, size, style);
         t.color = color;
         t.alignment = anchor;
-        t.fontStyle = style;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
         t.verticalOverflow = VerticalWrapMode.Overflow;
         t.raycastTarget = false;
@@ -135,12 +153,10 @@ public static class UIKit
                                   FontStyle style = FontStyle.Normal)
     {
         var t = Pixel(parent, name, pos, size).gameObject.AddComponent<Text>();
-        t.font = Font;
         t.text = text;
-        t.fontSize = size2;
+        Estilo(t, size2, style);
         t.color = color;
         t.alignment = TextAnchor.MiddleCenter;
-        t.fontStyle = style;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
         t.verticalOverflow = VerticalWrapMode.Overflow;
         t.raycastTarget = false;

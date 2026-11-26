@@ -50,6 +50,13 @@ public class MinijuegoEscondite : Minigame
     static readonly Color OctavioColor = new Color(0.8f, 0.5f, 0.42f);
 
     protected override string Title => "TENTÁCULOS · El gran escondite";
+
+    protected override void AplicarNivel(int n)
+    {
+        tiempo = PorNivel(n, 150f, 120f, 100f);
+        aturdido = PorNivel(n, 0.6f, 0.8f, 1.1f);
+    }
+    protected override string Pista => "Las orcas no llegan arriba ni abajo del todo: pégate al borde y cruza cada carril justo cuando la orca acaba de pasar.";
     protected override string Instructions =>
         "Hay que llevar a los pequeños desde el arrecife (izquierda) hasta la cueva (derecha).\n" +
         "Nada con W A S D o las flechas. Toca a un pequeño para que te siga y llévalo a la cueva.\n" +

@@ -32,10 +32,19 @@ public class MinijuegoConstruir : Minigame
     static readonly Color Piedra = new Color(0.6f, 0.56f, 0.5f);
 
     protected override string Title => "TENTÁCULOS · Levantar Octópolis";
+
+    protected override void AplicarNivel(int n)
+    {
+        pisos = PorNivel(n, 6, 8, 10);
+        vidas = PorNivel(n, 4, 3, 2);
+        anchoInicial = PorNivel(n, 440f, 380f, 340f);
+        velocidadBase = PorNivel(n, 300f, 360f, 420f);
+    }
+    protected override string Pista => "Suelta el bloque cuando sus bordes coincidan con los del de abajo (mira los bordes, no el centro). Los primeros pisos van más lentos: clávalos.";
     protected override string Instructions =>
         "¡Toca construir la primera torre de Octópolis!\n" +
         "El bloque de piedra va y viene: pulsa ESPACIO (o haz clic) para soltarlo justo encima.\n" +
-        "Lo que sobresale se cae. Si lo clavas, encaja perfecto. Levanta " + pisos + " pisos (3 vidas).";
+        "Lo que sobresale se cae. Si lo clavas, encaja perfecto. Levanta " + pisos + " pisos (" + vidas + " vidas).";
     protected override Color AccentColor => StageFlow.Tentaculos;
 
     protected override void Build()

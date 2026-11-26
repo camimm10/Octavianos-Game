@@ -29,6 +29,13 @@ public class MinijuegoCorrientes : Minigame
     Text movesText;
 
     protected override string Title => "MENTE · Las corrientes";
+
+    protected override void AplicarNivel(int n)
+    {
+        width = PorNivel(n, 5, 6, 7);
+        height = PorNivel(n, 3, 4, 4);
+    }
+    protected override string Pista => "Empieza por la salida de la derecha y ve hacia atrás: cada pieza tiene que apuntar a la siguiente. Las rectas solo tienen dos posiciones.";
     protected override string Instructions =>
         "Gira las piezas haciendo clic para formar una corriente\n" +
         "desde Octavio (izquierda) hasta la corriente profunda (derecha).\n" +

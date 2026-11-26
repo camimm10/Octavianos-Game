@@ -112,6 +112,11 @@ public class AppMovil : MonoBehaviour
         scaler.referenceResolution = new Vector2(1080, 1920);
         scaler.matchWidthOrHeight = 0f;
         UIKit.Panel(canvas.transform, "Fondo", Vector2.zero, Vector2.one, Fondo);
+        // Degradado del fondo del mar (más claro arriba) y burbujas y destellos que suben
+        var deg = UIKit.Rect(canvas.transform, "Degradado", Vector2.zero, Vector2.one).gameObject.AddComponent<RawImage>();
+        deg.texture = Estilo.Degradado(new Color(0.07f, 0.27f, 0.36f), new Color(0.02f, 0.07f, 0.13f));
+        deg.raycastTarget = false;
+        UIKit.Rect(canvas.transform, "Burbujas", Vector2.zero, Vector2.one).gameObject.AddComponent<BurbujasFondo>();
     }
 
     RectTransform NuevaPantalla(string titulo, bool volver = true)
@@ -121,7 +126,10 @@ public class AppMovil : MonoBehaviour
         texturas.Clear();
         campos.Clear();
         pantalla = UIKit.Rect(canvas.transform, "Pantalla", Vector2.zero, Vector2.one);
-        UIKit.Label(pantalla, "Titulo", new Vector2(0.06f, 0.89f), new Vector2(0.94f, 0.96f), titulo, 58, Color.white, TextAnchor.MiddleLeft, FontStyle.Bold);
+        var tituloTxt = UIKit.Label(pantalla, "Titulo", new Vector2(0.06f, 0.89f), new Vector2(0.94f, 0.96f), titulo, 64, Color.white, TextAnchor.MiddleLeft, FontStyle.Bold);
+        var sombra = tituloTxt.gameObject.AddComponent<Shadow>(); sombra.effectColor = new Color(0f, 0f, 0f, 0.45f); sombra.effectDistance = new Vector2(3f, -4f);
+        Estilo.Simbolos(pantalla, new Vector2(0.06f, 0.965f));
+        pantalla.gameObject.AddComponent<EntradaPantalla>();
         if (volver) Boton(pantalla, "‹ Inicio", new Vector2(0.06f, 0.02f), new Vector2(0.4f, 0.07f), new Color(1f, 1f, 1f, 0.12f), Inicio, 36);
         return pantalla;
     }
@@ -130,6 +138,9 @@ public class AppMovil : MonoBehaviour
     {
         var img = UIKit.Panel(padre, "Boton", min, max, color);
         img.raycastTarget = true;
+        img.sprite = Estilo.Redondeado; img.type = Image.Type.Sliced; img.pixelsPerUnitMultiplier = 1f;
+        var sh = img.gameObject.AddComponent<Shadow>(); sh.effectColor = new Color(0f, 0f, 0f, 0.35f); sh.effectDistance = new Vector2(0f, -6f);
+        img.gameObject.AddComponent<RebotePulsar>();
         var b = img.gameObject.AddComponent<Button>();
         b.targetGraphic = img;
         var cb = b.colors; cb.pressedColor = new Color(0.8f, 0.8f, 0.8f); b.colors = cb;
@@ -230,6 +241,7 @@ public class AppMovil : MonoBehaviour
         UIKit.PixelImage(cara, "OjoD", new Vector2(40f, 22f), new Vector2(48f, 48f), Color.white, UIKit.Circle);
         UIKit.PixelImage(cara, "PupilaI", new Vector2(-40f, 18f), new Vector2(22f, 22f), Color.black, UIKit.Circle);
         UIKit.PixelImage(cara, "PupilaD", new Vector2(40f, 18f), new Vector2(22f, 22f), Color.black, UIKit.Circle);
+        Estilo.Mejorar(cara);
         StartCoroutine(Flotar(cara));
 
         string saludo = datos.entradas.Count == 0 ? "¡Hola! Soy Octavio. ¿Me cuentas cómo estás hoy?"
@@ -250,7 +262,41 @@ public class AppMovil : MonoBehaviour
             float y1 = 0.6f - i * 0.083f;
             Boton(p, botones[i].Item1, new Vector2(0.08f, y1 - 0.07f), new Vector2(0.92f, y1), botones[i].Item2, botones[i].Item3);
         }
-        Texto(p, new Vector2(0.06f, 0.025f), new Vector2(0.94f, 0.075f), $"Bolsillo: {datos.algasDoradas} algas doradas", 32, TextAnchor.MiddleCenter, new Color(1f, 0.85f, 0.4f));
+        Boton(p, $"Bolsillo: {datos.algasDoradas} algas doradas  ›", new Vector2(0.08f, 0.02f), new Vector2(0.92f, 0.08f), new Color(1f, 0.8f, 0.3f, 0.22f), Bolsillo, 34);
+    }
+
+    // ================================================================ Bolsillo: pasar algas al juego del PC
+
+    void Bolsillo()
+    {
+        var p = NuevaPantalla("Bolsillo");
+        var oro = new Color(1f, 0.85f, 0.4f);
+        Texto(p, new Vector2(0.06f, 0.76f), new Vector2(0.94f, 0.87f), $"{datos.algasDoradas} algas doradas", 70, TextAnchor.MiddleCenter, oro);
+        Texto(p, new Vector2(0.08f, 0.62f), new Vector2(0.92f, 0.76f),
+            "Las ganas cuidándote: actividades, misiones y contándome cómo estás.\nGástalas en el juego del PC, en el «Armario de Octavio»: colores, gorros, ropa, ojos…", 34, TextAnchor.MiddleCenter);
+        var zona = UIKit.Rect(p, "Codigo", Vector2.zero, Vector2.one);
+
+        void Mostrar(int serie)
+        {
+            foreach (Transform h in zona) Destroy(h.gameObject);
+            Texto(zona, new Vector2(0.06f, 0.5f), new Vector2(0.94f, 0.55f), $"Código para {ObjetosOctavio.AlgasPorCodigo} algas:", 36, TextAnchor.MiddleCenter, StageFlow.Mente);
+            Linternas(zona, 0.44f, ObjetosOctavio.CodigoAlgas(serie), 115f);
+            Texto(zona, new Vector2(0.06f, 0.3f), new Vector2(0.94f, 0.39f),
+                "En el PC: menú principal → «Objetos del móvil» → escribe estas 7 linternas. Cada código vale una vez.", 30, TextAnchor.MiddleCenter);
+        }
+        if (datos.ultimoEnvio >= 0) Mostrar(datos.ultimoEnvio);
+
+        bool puede = datos.algasDoradas >= ObjetosOctavio.AlgasPorCodigo;
+        Boton(p, puede ? $"Pasar {ObjetosOctavio.AlgasPorCodigo} algas al PC" : $"Necesitas {ObjetosOctavio.AlgasPorCodigo} algas para pasarlas al PC",
+            new Vector2(0.08f, 0.17f), new Vector2(0.92f, 0.26f), puede ? Alfa(oro, 0.45f) : new Color(1f, 1f, 1f, 0.08f), () =>
+            {
+                if (datos.algasDoradas < ObjetosOctavio.AlgasPorCodigo) return;
+                datos.algasDoradas -= ObjetosOctavio.AlgasPorCodigo;
+                datos.ultimoEnvio = datos.envioAlgas % 27;
+                datos.envioAlgas = (datos.envioAlgas + 1) % 27;
+                datos.Guardar();
+                Bolsillo();   // repinta con el nuevo saldo y el código
+            }, 38);
     }
 
     void Update()
@@ -782,13 +828,13 @@ public class AppMovil : MonoBehaviour
         CheckOut($"¡{objeto.nombre} para Octavio! Dibujar despeja la mente.");
     }
 
-    // 4 linternas de Destello en fila (código de un objeto)
+    // Linternas de Destello en fila (código de un objeto o de algas)
     static void Linternas(Transform padre, float y, int[] codigo, float tam)
     {
         var a = UIKit.Rect(padre, "Linternas", new Vector2(0.5f, y), new Vector2(0.5f, y));
         for (int i = 0; i < codigo.Length; i++)
         {
-            var bola = UIKit.PixelImage(a, "Linterna", new Vector2((i - 1.5f) * tam * 1.25f, 0f), Vector2.one * tam, new Color(1f, 1f, 1f, 0.1f), UIKit.Circle);
+            var bola = UIKit.PixelImage(a, "Linterna", new Vector2((i - (codigo.Length - 1) / 2f) * tam * 1.2f, 0f), Vector2.one * tam, new Color(1f, 1f, 1f, 0.1f), UIKit.Circle);
             int d = codigo[i];
             UIKit.PixelImage(bola, "Simbolo", Vector2.zero, Vector2.one * tam * 0.55f, ObjetosOctavio.ColorLuz[d], d == 0 ? UIKit.Circle : d == 2 ? UIKit.Triangle : null);
         }
@@ -1479,5 +1525,179 @@ public class AppMovil : MonoBehaviour
             actual = new EntradaDiario { fecha = DateTime.Now.ToString("o") };
             Actividad("Caminar");
         });
+    }
+}
+
+
+/// <summary>Estilo de la app: sprites redondeados, degradados, símbolos de Destello y pequeños adornos.</summary>
+public static class Estilo
+{
+    static Sprite redondeado;
+
+    /// <summary>Rectángulo con las esquinas redondeadas (se estira sin deformar las esquinas).</summary>
+    public static Sprite Redondeado
+    {
+        get
+        {
+            if (redondeado != null) return redondeado;
+            const int S = 96, R = 30;
+            var tex = new Texture2D(S, S, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+            var px = new Color32[S * S];
+            for (int y = 0; y < S; y++)
+                for (int x = 0; x < S; x++)
+                {
+                    float cx = Mathf.Clamp(x + 0.5f, R, S - R), cy = Mathf.Clamp(y + 0.5f, R, S - R);
+                    float d = Mathf.Sqrt((x + 0.5f - cx) * (x + 0.5f - cx) + (y + 0.5f - cy) * (y + 0.5f - cy));
+                    px[y * S + x] = new Color32(255, 255, 255, (byte)(Mathf.Clamp01(R - d + 0.5f) * 255f));
+                }
+            tex.SetPixels32(px); tex.Apply();
+            redondeado = Sprite.Create(tex, new Rect(0, 0, S, S), new Vector2(0.5f, 0.5f), 100f, 0, SpriteMeshType.FullRect, new Vector4(R, R, R, R));
+            return redondeado;
+        }
+    }
+
+    public static Texture2D Degradado(Color arriba, Color abajo)
+    {
+        var t = new Texture2D(1, 64, TextureFormat.RGBA32, false) { wrapMode = TextureWrapMode.Clamp };
+        for (int i = 0; i < 64; i++) { var c = Color.Lerp(abajo, arriba, i / 63f); c.a = 0.85f; t.SetPixel(0, i, c); }
+        t.Apply();
+        return t;
+    }
+
+    /// <summary>● ■ ▲ pequeños encima del título (el sello de Destello).</summary>
+    public static void Simbolos(Transform padre, Vector2 ancla)
+    {
+        var a = UIKit.Rect(padre, "Simbolos", ancla, ancla);
+        Color[] c = { new Color(0.95f, 0.25f, 0.25f), new Color(0.3f, 0.9f, 0.4f), new Color(0.35f, 0.55f, 1f) };
+        for (int i = 0; i < 3; i++)
+            UIKit.PixelImage(a, "S" + i, new Vector2(16f + i * 34f, 0f), new Vector2(22f, 22f), c[i], i == 0 ? UIKit.Circle : i == 2 ? UIKit.Triangle : null);
+    }
+
+    /// <summary>El Octavio del inicio: tentáculos que se mueven, mejillas y parpadeo.</summary>
+    public static void Mejorar(RectTransform cara)
+    {
+        var piel = cara.GetComponent<Image>().color;
+        for (int i = 0; i < 6; i++)
+        {
+            float x = (i - 2.5f) * 32f;
+            var t = UIKit.PixelImage(cara, "Tentaculo" + i, new Vector2(x, -110f), new Vector2(30f, 90f), piel, Redondeado);
+            t.pivot = new Vector2(0.5f, 1f);
+            t.SetAsFirstSibling();
+        }
+        UIKit.PixelImage(cara, "MejillaI", new Vector2(-68f, -18f), new Vector2(34f, 20f), new Color(1f, 0.55f, 0.6f, 0.75f), UIKit.Circle);
+        UIKit.PixelImage(cara, "MejillaD", new Vector2(68f, -18f), new Vector2(34f, 20f), new Color(1f, 0.55f, 0.6f, 0.75f), UIKit.Circle);
+        var boca = UIKit.PixelLabel(cara, "Boca", new Vector2(0f, -38f), new Vector2(60f, 60f), ")", 54, new Color(0.15f, 0.05f, 0.05f));
+        boca.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -90f);   // un paréntesis tumbado: sonrisa
+        UIKit.PixelImage(cara, "Brillo", new Vector2(-55f, 70f), new Vector2(40f, 26f), new Color(1f, 1f, 1f, 0.35f), UIKit.Circle);
+        cara.gameObject.AddComponent<OctavioVivo>();
+    }
+}
+
+/// <summary>Anima al Octavio del inicio: mueve los tentáculos y parpadea.</summary>
+public class OctavioVivo : MonoBehaviour
+{
+    RectTransform[] tentaculos; RectTransform[] ojos; float proximo;
+    void Start()
+    {
+        tentaculos = new RectTransform[6];
+        for (int i = 0; i < 6; i++) tentaculos[i] = (RectTransform)transform.Find("Tentaculo" + i);
+        ojos = new[] { (RectTransform)transform.Find("OjoI"), (RectTransform)transform.Find("OjoD"), (RectTransform)transform.Find("PupilaI"), (RectTransform)transform.Find("PupilaD") };
+        proximo = Time.time + 2f;
+    }
+    void Update()
+    {
+        for (int i = 0; i < tentaculos.Length; i++)
+            if (tentaculos[i] != null) tentaculos[i].localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 2.4f + i * 0.9f) * 14f + (i - 2.5f) * 6f);
+        float y = 1f;
+        if (Time.time > proximo) { float k = (Time.time - proximo) / 0.16f; y = Mathf.Lerp(1f, 0.1f, 1f - Mathf.Abs(k * 2f - 1f)); if (k >= 1f) proximo = Time.time + UnityEngine.Random.Range(2f, 5f); }
+        foreach (var o in ojos) if (o != null) o.localScale = new Vector3(1f, y, 1f);
+    }
+}
+
+/// <summary>Los botones se encogen un poco al pulsarlos y rebotan al soltarlos.</summary>
+public class RebotePulsar : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerExitHandler
+{
+    float objetivo = 1f, actual = 1f, vel;
+    bool activo;
+    public void OnPointerDown(PointerEventData e) { objetivo = 0.93f; activo = true; }
+    public void OnPointerUp(PointerEventData e) => objetivo = 1f;
+    public void OnPointerExit(PointerEventData e) => objetivo = 1f;
+    void Update()
+    {
+        if (!activo) return;   // no pisa la animación de entrada de la pantalla
+        // muelle: rebota un poquito al volver a su tamaño
+        vel += (objetivo - actual) * 260f * Time.unscaledDeltaTime;
+        vel *= Mathf.Exp(-14f * Time.unscaledDeltaTime);
+        actual += vel * Time.unscaledDeltaTime;
+        if (Mathf.Abs(actual - 1f) < 0.0005f && Mathf.Abs(vel) < 0.001f && objetivo == 1f) { actual = 1f; vel = 0f; activo = false; }
+        var s = transform.localScale; if (s.x > 0.5f) transform.localScale = new Vector3(actual, actual, 1f);
+    }
+}
+
+/// <summary>Cada pantalla aparece con un fundido y sus botones entran uno detrás de otro con un saltito.</summary>
+public class EntradaPantalla : MonoBehaviour
+{
+    float inicio;
+    CanvasGroup grupo;
+    void Awake() => inicio = Time.realtimeSinceStartup;
+
+    // Por si algo para la animación: nunca se queda la pantalla invisible
+    void Update() { if (grupo != null && grupo.alpha < 1f && Time.realtimeSinceStartup - inicio > 1.2f) grupo.alpha = 1f; }
+
+    IEnumerator Start()
+    {
+        grupo = gameObject.AddComponent<CanvasGroup>();
+        grupo.alpha = 0.15f;
+        yield return null;   // esperar a que la pantalla tenga todos sus elementos
+        var botones = GetComponentsInChildren<Button>(true).Select(b => (RectTransform)b.transform).Take(14).ToList();
+        foreach (var b in botones) b.localScale = Vector3.one * 0.82f;
+        float t0 = Time.realtimeSinceStartup, t = 0f;
+        while (t < 0.9f)
+        {
+            t = Time.realtimeSinceStartup - t0;
+            grupo.alpha = Mathf.Max(0.15f, Mathf.Clamp01(t / 0.22f));
+            for (int i = 0; i < botones.Count; i++)
+            {
+                if (botones[i] == null) continue;
+                float k = Mathf.Clamp01((t - 0.05f - i * 0.045f) / 0.32f);
+                float s = k >= 1f ? 1f : 1f + 2.2f * Mathf.Pow(k - 1f, 3f) + 1.2f * Mathf.Pow(k - 1f, 2f);   // ease-out-back
+                botones[i].localScale = Vector3.one * Mathf.Lerp(0.82f, 1f, s);
+            }
+            yield return null;
+        }
+        grupo.alpha = 1f;
+        foreach (var b in botones) if (b != null) b.localScale = Vector3.one;
+    }
+}
+
+/// <summary>Burbujas y destellos ● ■ ▲ que suben despacio por el fondo.</summary>
+public class BurbujasFondo : MonoBehaviour
+{
+    readonly List<RectTransform> cosas = new List<RectTransform>();
+    readonly List<float> vel = new List<float>();
+    void Start()
+    {
+        Color[] c = { new Color(0.95f, 0.25f, 0.25f), new Color(0.3f, 0.9f, 0.4f), new Color(0.35f, 0.55f, 1f), Color.white };
+        for (int i = 0; i < 22; i++)
+        {
+            int k = i % 4;
+            float tam = k == 3 ? UnityEngine.Random.Range(14f, 40f) : UnityEngine.Random.Range(22f, 48f);
+            var col = c[k]; col.a = k == 3 ? 0.1f : 0.09f;
+            var r = UIKit.PixelImage(transform, "B" + i, new Vector2(UnityEngine.Random.Range(-520f, 520f), UnityEngine.Random.Range(-960f, 960f)), Vector2.one * tam, col,
+                                     k == 0 || k == 3 ? UIKit.Circle : k == 2 ? UIKit.Triangle : null);
+            cosas.Add(r); vel.Add(UnityEngine.Random.Range(30f, 80f));
+        }
+    }
+    void Update()
+    {
+        for (int i = 0; i < cosas.Count; i++)
+        {
+            var p = cosas[i].anchoredPosition;
+            p.y += vel[i] * Time.unscaledDeltaTime;
+            p.x += Mathf.Sin(Time.time * 0.7f + i) * 12f * Time.unscaledDeltaTime;
+            if (p.y > 1000f) { p.y = -1000f; p.x = UnityEngine.Random.Range(-520f, 520f); }
+            cosas[i].anchoredPosition = p;
+            cosas[i].localRotation = Quaternion.Euler(0f, 0f, Mathf.Sin(Time.time * 0.5f + i) * 25f);
+        }
     }
 }

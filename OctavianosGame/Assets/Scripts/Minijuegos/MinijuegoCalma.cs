@@ -17,6 +17,8 @@ public class MinijuegoCalma : MinijuegoConfianza
     static readonly Color Perlita = new Color(1f, 0.88f, 0.45f);
 
     protected override string Title => "CORAZÓN · Es solo un juego";
+
+    protected override string Pista => "Convierte la huida en un juego: lo que suena a escondite divertido y en voz baja les calma. No les digas que vienen las orcas.";
     protected override string Instructions =>
         "Los pequeños están asustados y no saben qué pasa.\n" +
         "Elige qué decirle a cada uno con 1, 2, 3 (o con clic). Si están tranquilos, se esconderán sin hacer ruido.\n" +

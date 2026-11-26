@@ -76,6 +76,20 @@ public class OctavioSkinColor : MonoBehaviour
         ApplyColor(current);
     }
 
+    /// <summary>Brillo propio de la piel (1 = normal). Lo cambia el Armario de Octavio.</summary>
+    [System.NonSerialized] public float Brillo = 1f;
+
+    /// <summary>Cambia el color normal de la piel (Armario de Octavio). Los colores de Destello no cambian.</summary>
+    public void CambiarNeutral(Color c)
+    {
+        bool enNeutral = target == neutral;
+        neutral = c;
+        if (enNeutral) { target = c; current = c; ApplyColor(current); }
+    }
+
+    /// <summary>Para la vista previa del armario: que las teclas 1-2-3 no le cambien el color.</summary>
+    public bool LeerTeclado { set => readKeyboard = value; }
+
     /// <summary>Vuelve al color normal.</summary>
     public void ResetColor() => target = neutral;
 
@@ -86,7 +100,7 @@ public class OctavioSkinColor : MonoBehaviour
             if (r == null) continue;
             r.GetPropertyBlock(block);
             block.SetColor(BaseColorId, c);
-            block.SetColor(EmissionId, c * LuzPropia);
+            block.SetColor(EmissionId, c * LuzPropia * Brillo);
             r.SetPropertyBlock(block);
         }
     }

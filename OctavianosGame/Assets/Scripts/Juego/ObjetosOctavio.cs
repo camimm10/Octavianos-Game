@@ -54,6 +54,33 @@ public static class ObjetosOctavio
         return true;
     }
 
+    // ---------------------------------------------------------------- Algas doradas: del móvil al PC
+
+    /// <summary>Algas que pasa cada código del móvil al juego del PC.</summary>
+    public const int AlgasPorCodigo = 5;
+
+    /// <summary>
+    /// Código de 7 linternas para pasar algas: ● ● (marca de algas, ningún complemento empieza así)
+    /// + número de envío (3 linternas, 0-26) + comprobación (2 linternas). Cada código vale una sola vez.
+    /// </summary>
+    public static int[] CodigoAlgas(int serie)
+    {
+        serie = ((serie % 27) + 27) % 27;
+        int chk = (serie * 7 + 4) % 9;
+        return new[] { 0, 0, serie / 9, (serie / 3) % 3, serie % 3, chk / 3, chk % 3 };
+    }
+
+    /// <summary>Número de envío de un código de algas válido, o -1.</summary>
+    public static int SerieAlgas(IList<int> c)
+    {
+        if (c == null || c.Count != 7 || c[0] != 0 || c[1] != 0) return -1;
+        int s = c[2] * 9 + c[3] * 3 + c[4], chk = c[5] * 3 + c[6];
+        return chk == (s * 7 + 4) % 9 ? s : -1;
+    }
+
+    /// <summary>¿Estas linternas son el principio de un código de algas?</summary>
+    public static bool EmpiezaAlgas(IList<int> c) => c != null && c.Count >= 2 && c[0] == 0 && c[1] == 0;
+
     /// <summary>Pone a Octavio los complementos desbloqueados.</summary>
     public static void Equipar(GameObject octavio)
     {
@@ -306,6 +333,7 @@ public class AccesoriosOctavio : MonoBehaviour
             {
                 case "corona":
                 {
+                    if (Armario.LlevaGorro) break;   // con sombrero del armario no se pone la corona encima
                     var g = Pieza("Corona", ObjetosOctavio.MallaCorona(), Material(baseMat, o.color));
                     // la base de la corona a 1/4 de la altura de la cabeza desde arriba; el radio, el de la cabeza a esa altura
                     float baja = semiAlto * 0.28f;

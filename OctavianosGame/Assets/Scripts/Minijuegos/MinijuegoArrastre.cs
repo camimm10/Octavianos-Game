@@ -25,6 +25,15 @@ public class MinijuegoArrastre : Minigame
     readonly List<RectTransform> obstacles = new List<RectTransform>();
 
     protected override string Title => "TENTÁCULOS · El arrastre";
+
+    protected override void AplicarNivel(int n)
+    {
+        duration = PorNivel(n, 16f, 22f, 27f);
+        gap = PorNivel(n, 380f, 310f, 265f);
+        scrollSpeed = PorNivel(n, 280f, 320f, 365f);
+        spawnEvery = PorNivel(n, 1.9f, 1.7f, 1.5f);
+    }
+    protected override string Pista => "Da toques cortos en vez de mantener pulsado: sube poco a poco y colócate a la altura del hueco antes de que llegue la roca.";
     protected override string Instructions =>
         "El humano pesa mucho y os hundís.\n" +
         "Pulsa ESPACIO, W o haz clic para impulsarte hacia arriba.\n" +

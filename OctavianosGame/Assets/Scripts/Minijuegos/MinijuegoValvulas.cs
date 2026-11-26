@@ -26,6 +26,10 @@ public class MinijuegoValvulas : Minigame
     int moves;
 
     protected override string Title => "MENTE · La presión del géiser";
+
+    protected override void AplicarNivel(int n) => giros = PorNivel(n, new Vector2Int(2, 4), new Vector2Int(3, 6), new Vector2Int(5, 8));
+    Vector2Int giros = new Vector2Int(3, 6);
+    protected override string Pista => "Girar dos veces la misma válvula la deja como estaba. Ve fila a fila: para arreglar una fila, gira las válvulas de la fila de debajo.";
     protected override string Instructions =>
         "El géiser solo entrará en erupción si TODAS las válvulas están abiertas (verdes).\n" +
         "Al girar una válvula (clic o teclas 1-9) también cambian\n" +
@@ -42,7 +46,7 @@ public class MinijuegoValvulas : Minigame
                 open[x, y] = true;
 
         // Desordenar con giros al azar (así siempre tiene solución)
-        int presses = Random.Range(3, 6);
+        int presses = Random.Range(giros.x, giros.y);
         for (int i = 0; i < presses; i++) Press(Random.Range(0, Size), Random.Range(0, Size));
         if (AllOpen()) Press(1, 1);
 

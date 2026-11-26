@@ -62,7 +62,7 @@ public class DialogueUI : MonoBehaviour
 
     void Build()
     {
-        font = Resources.GetBuiltinResource<Font>("LegacyRuntime.ttf");
+        font = UIKit.Font;   // Fredoka (o la de Unity si no está)
 
         var canvasGO = new GameObject("Canvas", typeof(Canvas), typeof(CanvasScaler));
         canvasGO.transform.SetParent(transform, false);
@@ -106,9 +106,7 @@ public class DialogueUI : MonoBehaviour
         go.transform.SetParent(parent, false);
         Stretch(go.GetComponent<RectTransform>(), min, max);
         var t = go.GetComponent<Text>();
-        t.font = font;
-        t.fontSize = size;
-        t.fontStyle = style;
+        UIKit.Estilo(t, size, style);
         t.alignment = anchor;
         t.color = Color.white;
         t.horizontalOverflow = HorizontalWrapMode.Wrap;
