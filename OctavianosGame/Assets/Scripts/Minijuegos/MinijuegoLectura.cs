@@ -40,7 +40,7 @@ public class MinijuegoLectura : Minigame
         preguntas = PorNivel(n, 5, 6, 8);
         vidas = PorNivel(n, 4, 3, 2);
     }
-    protected override string Pista => "Rojo ● = 0, verde ■ = 1, azul ▲ = 2. Con varios destellos, el primero vale ×9, el segundo ×3 y el último ×1: súmalos.";
+    protected override string Pista => "La 1ª linterna dice qué es: rojo ● = dato, verde ■ = operación. Las otras tres son el número en base 3 (● 0, ■ 1, ▲ 2): la 2ª vale ×9, la 3ª ×3 y la 4ª ×1. Para letras: A = 0, B = 1, C = 2… En un programa, RESTAR hace primero menos segundo.";
     protected override string Instructions =>
         "Los pequeños Octavianos quieren aprender a leer la luz.\n" +
         "Mira cada destello y elige qué significa con 1, 2, 3 (o con clic).\n" +

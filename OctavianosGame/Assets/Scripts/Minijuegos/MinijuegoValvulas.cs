@@ -29,7 +29,7 @@ public class MinijuegoValvulas : Minigame
 
     protected override void AplicarNivel(int n) => giros = PorNivel(n, new Vector2Int(2, 4), new Vector2Int(3, 6), new Vector2Int(5, 8));
     Vector2Int giros = new Vector2Int(3, 6);
-    protected override string Pista => "Girar dos veces la misma válvula la deja como estaba. Ve fila a fila: para arreglar una fila, gira las válvulas de la fila de debajo.";
+    protected override string Pista => "Las válvulas que tienes que girar llevan una ★. Gira cada una una sola vez (el orden da igual). Si giras otra, aparecerá una ★ nueva para deshacerlo.";
     protected override string Instructions =>
         "El géiser solo entrará en erupción si TODAS las válvulas están abiertas (verdes).\n" +
         "Al girar una válvula (clic o teclas 1-9) también cambian\n" +
@@ -137,7 +137,9 @@ public class MinijuegoValvulas : Minigame
             for (int y = 0; y < Size; y++)
             {
                 images[x, y].color = open[x, y] ? Abierta : Cerrada;
-                labels[x, y].text = open[x, y] ? "ABIERTA" : "CERRADA";
+                bool marcar = PistaComprada && pending[x, y];   // pista: válvulas que faltan por girar
+                labels[x, y].text = (marcar ? "★ " : "") + (open[x, y] ? "ABIERTA" : "CERRADA");
+                labels[x, y].color = marcar ? new Color(1f, 0.92f, 0.4f) : Color.white;
                 if (open[x, y]) count++;
             }
         SetProgress(fill, count / (float)(Size * Size));

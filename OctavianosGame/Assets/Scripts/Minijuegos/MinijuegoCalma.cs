@@ -18,7 +18,7 @@ public class MinijuegoCalma : MinijuegoConfianza
 
     protected override string Title => "CORAZÓN · Es solo un juego";
 
-    protected override string Pista => "Convierte la huida en un juego: lo que suena a escondite divertido y en voz baja les calma. No les digas que vienen las orcas.";
+    protected override string Pista => "Convierte lo que pasa en un juego de escondite, en voz baja, y nunca digas cosas que den miedo (que se los van a comer, que no volverán a ver a su familia). Incluso las orcas pueden ser «las que buscan».";
     protected override string Instructions =>
         "Los pequeños están asustados y no saben qué pasa.\n" +
         "Elige qué decirle a cada uno con 1, 2, 3 (o con clic). Si están tranquilos, se esconderán sin hacer ruido.\n" +

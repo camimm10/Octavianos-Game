@@ -45,7 +45,7 @@ public class MinijuegoRecoleccion : Minigame
         crabs = PorNivel(n, 3, 4, 6);
         crabSpeed = PorNivel(n, 150f, 170f, 205f);
     }
-    protected override string Pista => "Ve siempre a por el alga más cercana y no persigas las que tienen un cangrejo al lado: enseguida aparecen otras.";
+    protected override string Pista => "Cada alga que recoges hace aparecer otra cerca de ti: ve siempre a la más cercana. Si tiene un cangrejo al lado, ve a por otra (siempre hay 5) en vez de esperar.";
     protected override string Instructions =>
         "Llega la marea fría y la colonia necesita algas para el invierno.\n" +
         "Nada con W A S D o con las flechas y recoge " + goal + " algas antes de que se acabe el tiempo.\n" +

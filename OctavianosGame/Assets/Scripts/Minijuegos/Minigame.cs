@@ -48,6 +48,8 @@ public abstract class Minigame : MonoBehaviour
 
     int nivelJugado = 1;
     bool pistaComprada;
+    /// <summary>True si el jugador ha comprado la pista de esta prueba.</summary>
+    protected bool PistaComprada => pistaComprada;
 
     public void Begin(Action<bool> onEnd)
     {

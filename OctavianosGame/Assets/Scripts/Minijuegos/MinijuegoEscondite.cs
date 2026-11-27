@@ -56,7 +56,7 @@ public class MinijuegoEscondite : Minigame
         tiempo = PorNivel(n, 150f, 120f, 100f);
         aturdido = PorNivel(n, 0.6f, 0.8f, 1.1f);
     }
-    protected override string Pista => "Las orcas no llegan arriba ni abajo del todo: pégate al borde y cruza cada carril justo cuando la orca acaba de pasar.";
+    protected override string Pista => "Entre carril y carril hay un hueco donde ninguna orca llega: espera ahí. Cruza cada carril pegado al borde de arriba o de abajo, justo cuando la orca acaba de pasar y se aleja. Lleva a los pequeños de uno en uno.";
     protected override string Instructions =>
         "Hay que llevar a los pequeños desde el arrecife (izquierda) hasta la cueva (derecha).\n" +
         "Nada con W A S D o las flechas. Toca a un pequeño para que te siga y llévalo a la cueva.\n" +

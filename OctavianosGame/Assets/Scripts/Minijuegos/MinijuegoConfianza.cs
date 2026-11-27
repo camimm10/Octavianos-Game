@@ -104,7 +104,7 @@ public class MinijuegoConfianza : Minigame
     protected override string Title => "CORAZÓN · ¿Qué te pasa, Octavio?";
 
     protected override void AplicarNivel(int n) => needed = PorNivel(n, 4, 5, 6);
-    protected override string Pista => "Sé sincero y ábrete: contar lo que de verdad sientes suma 2 puntos. Esconderte o contestar mal resta.";
+    protected override string Pista => "Elige siempre la respuesta sincera, que cuenta lo que de verdad sientes o pasó: suma 2. Las respuestas que esquivan no suman nada y las bordes restan.";
     protected override string Instructions =>
         "Octavio ha vuelto distinto, y su familia lo nota.\n" +
         "Contesta a sus preguntas con 1, 2, 3 o con clic. Ser sincero y abrirse genera confianza;\n" +
