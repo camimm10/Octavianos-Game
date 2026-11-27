@@ -255,14 +255,51 @@ public class AppMovil : MonoBehaviour
             ("Misiones fuera de casa", Alfa(Verde, 0.45f), Misiones),
             ("Mis colecciones", Alfa(new Color(1f, 0.8f, 0.35f), 0.4f), () => Colecciones("Libro")),
             ("Mis estadísticas", Alfa(StageFlow.Mente, 0.45f), Estadisticas),
-            ("Octavio en tu mundo (RA)", Alfa(Lila, 0.5f), () => { if (Application.CanStreamedLevelBeLoaded("RA_Prueba")) SceneManager.LoadScene("RA_Prueba"); }),
+            ("Octavio en tu mundo (RA)", Alfa(Lila, 0.5f), AbrirRA),
+            ("Octavio como en el PC", Alfa(new Color(1f, 0.8f, 0.35f), 0.3f), ComoEnElPC),
         };
         for (int i = 0; i < botones.Length; i++)
         {
-            float y1 = 0.6f - i * 0.083f;
-            Boton(p, botones[i].Item1, new Vector2(0.08f, y1 - 0.07f), new Vector2(0.92f, y1), botones[i].Item2, botones[i].Item3);
+            float y1 = 0.6f - i * 0.072f;
+            Boton(p, botones[i].Item1, new Vector2(0.08f, y1 - 0.062f), new Vector2(0.92f, y1), botones[i].Item2, botones[i].Item3);
         }
         Boton(p, $"Bolsillo: {datos.algasDoradas} algas doradas  ›", new Vector2(0.08f, 0.02f), new Vector2(0.92f, 0.08f), new Color(1f, 0.8f, 0.3f, 0.22f), Bolsillo, 34);
+    }
+
+    static void AbrirRA() { if (Application.CanStreamedLevelBeLoaded("RA_Prueba")) SceneManager.LoadScene("RA_Prueba"); }
+
+    // ================================================================ Octavio como en el PC (código de estilo)
+
+    void ComoEnElPC()
+    {
+        var p = NuevaPantalla("Como en el PC");
+        Texto(p, new Vector2(0.08f, 0.66f), new Vector2(0.92f, 0.86f),
+            "En el juego del PC abre el «Armario de Octavio». Abajo a la derecha verás un código de 7 letras (por ejemplo KDF-4QXA).\n\nEscríbelo aquí y Octavio saldrá en la cámara igual que en el PC: piel, gorro, ropa, ojos y complementos.", 34, TextAnchor.MiddleCenter);
+        var campo = CampoTexto(p, new Vector2(0.15f, 0.53f), new Vector2(0.85f, 0.61f), "Código del PC", false, true);
+        campo.characterLimit = 9;
+        campo.contentType = InputField.ContentType.Alphanumeric;
+        campo.characterValidation = InputField.CharacterValidation.None;
+        campo.onValidateInput = (texto, pos, ch) => ch == '-' || char.IsLetterOrDigit(ch) ? char.ToUpperInvariant(ch) : '\0';
+        campo.textComponent.alignment = TextAnchor.MiddleCenter;
+        campo.textComponent.fontSize = 56;
+        var resultado = Texto(p, new Vector2(0.08f, 0.31f), new Vector2(0.92f, 0.41f), "", 36, TextAnchor.MiddleCenter);
+        Button verRA = null;
+        Boton(p, "Vestir a Octavio", new Vector2(0.15f, 0.42f), new Vector2(0.85f, 0.5f), Alfa(new Color(1f, 0.8f, 0.35f), 0.5f), () =>
+        {
+            if (EstiloOctavio.Aplicar(campo.text))
+            {
+                resultado.color = new Color(0.55f, 1f, 0.65f);
+                resultado.text = "¡Listo! Octavio ya va como en el PC.";
+                if (verRA != null) verRA.gameObject.SetActive(true);
+            }
+            else
+            {
+                resultado.color = new Color(1f, 0.6f, 0.55f);
+                resultado.text = "Ese código no es correcto. Revisa las letras (son 7).";
+            }
+        });
+        verRA = Boton(p, "Verlo en tu mundo (RA)", new Vector2(0.15f, 0.2f), new Vector2(0.85f, 0.28f), Alfa(Lila, 0.55f), AbrirRA);
+        verRA.gameObject.SetActive(false);
     }
 
     // ================================================================ Bolsillo: pasar algas al juego del PC

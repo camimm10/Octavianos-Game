@@ -33,7 +33,8 @@ public class MisionRA : MonoBehaviour
     {
         octavio.gameObject.SetActive(false);
         PulpoCartoon.Aplicar(octavio.gameObject);   // Octavio de dibujos animados
-        ObjetosOctavio.Equipar(octavio.gameObject); // lo que hayas conseguido dibujando
+        Armario.Vestir(octavio.gameObject);          // el aspecto del armario (código «Como en el PC»)
+        ObjetosOctavio.Equipar(octavio.gameObject); // lo que hayas conseguido dibujando (los puestos)
         camaraSimple.enabled = false;
         Mensaje("Comprobando tu móvil…");
         if (estado != null && Application.CanStreamedLevelBeLoaded("MenuMovil"))

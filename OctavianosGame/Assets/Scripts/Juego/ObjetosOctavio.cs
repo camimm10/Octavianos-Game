@@ -44,6 +44,23 @@ public static class ObjetosOctavio
 
     public static bool Tiene(string id) => Desbloqueados().Contains(id);
 
+    // Complementos guardados en el armario (los tiene, pero no los lleva puestos)
+    const string ClaveGuardados = "Objetos.Guardados";
+    static List<string> Guardados() => PlayerPrefs.GetString(ClaveGuardados, "").Split(',').Where(x => x.Length > 0).Distinct().ToList();
+
+    /// <summary>Complementos que lleva puestos: los desbloqueados que no están guardados en el armario.</summary>
+    public static List<string> Puestos() { var g = Guardados(); return Desbloqueados().Where(id => !g.Contains(id)).ToList(); }
+    public static bool Puesto(string id) => Puestos().Contains(id);
+
+    /// <summary>Ponerse un complemento o guardarlo en el armario.</summary>
+    public static void Poner(string id, bool puesto)
+    {
+        var g = Guardados();
+        if (puesto) g.Remove(id); else if (!g.Contains(id)) g.Add(id);
+        PlayerPrefs.SetString(ClaveGuardados, string.Join(",", g));
+        PlayerPrefs.Save();
+    }
+
     public static bool Desbloquear(string id)
     {
         var l = Desbloqueados();
@@ -84,9 +101,14 @@ public static class ObjetosOctavio
     /// <summary>Pone a Octavio los complementos desbloqueados.</summary>
     public static void Equipar(GameObject octavio)
     {
-        if (octavio == null || Desbloqueados().Count == 0) return;
-        var a = octavio.GetComponent<AccesoriosOctavio>() ?? octavio.AddComponent<AccesoriosOctavio>();
-        a.Reconstruir();
+        if (octavio == null) return;
+        var a = octavio.GetComponent<AccesoriosOctavio>();
+        if (a == null)
+        {
+            if (Puestos().Count == 0) return;
+            a = octavio.AddComponent<AccesoriosOctavio>();
+        }
+        a.Reconstruir();   // también quita los que se acaban de guardar en el armario
     }
 
     // ---------------------------------------------------------------- Dibujo de referencia (para la app y el menú)
@@ -326,7 +348,7 @@ public class AccesoriosOctavio : MonoBehaviour
         var baseMat = cabeza.sharedMaterial;
         float s = radio;
 
-        foreach (var id in ObjetosOctavio.Desbloqueados())
+        foreach (var id in ObjetosOctavio.Puestos())
         {
             var o = ObjetosOctavio.PorId(id);
             switch (id)

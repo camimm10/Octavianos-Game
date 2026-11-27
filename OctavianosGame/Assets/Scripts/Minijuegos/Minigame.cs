@@ -71,7 +71,7 @@ public abstract class Minigame : MonoBehaviour
         RectTransform bPista = null;
         if (TieneNiveles)
         {
-            UIKit.Label(intro, "Dificultad", new Vector2(0.1f, 0.33f), new Vector2(0.9f, 0.37f), "Dificultad  (teclas F1, F2, F3 o clic)", 24, new Color(1f, 1f, 1f, 0.6f));
+            UIKit.Label(intro, "Dificultad", new Vector2(0.1f, 0.33f), new Vector2(0.9f, 0.37f), "Dificultad  (Ctrl+F1, Ctrl+F2, Ctrl+F3 o clic)", 24, new Color(1f, 1f, 1f, 0.6f));
             for (int i = 0; i < 3; i++)
             {
                 float x0 = 0.26f + i * 0.165f;
@@ -113,9 +113,11 @@ public abstract class Minigame : MonoBehaviour
             for (int i = 0; i < 3; i++) if (botonesNivel[i] != null && UIKit.Clicked(botonesNivel[i])) elegido = i;
             if (TieneNiveles && kbI != null)
             {
-                if (kbI.f1Key.wasPressedThisFrame) elegido = 0;
-                if (kbI.f2Key.wasPressedThisFrame) elegido = 1;
-                if (kbI.f3Key.wasPressedThisFrame) elegido = 2;
+                // Ctrl + F1/F2/F3 (F2 solo suele subir/bajar el volumen en los portátiles)
+                bool ctrl = kbI.ctrlKey.isPressed;
+                if (ctrl && kbI.f1Key.wasPressedThisFrame) elegido = 0;
+                if (ctrl && kbI.f2Key.wasPressedThisFrame) elegido = 1;
+                if (ctrl && kbI.f3Key.wasPressedThisFrame) elegido = 2;
             }
             bool quierePista = bPista != null && nivelJugado == 2 && !pistaComprada &&
                                (UIKit.Clicked(bPista) || (kbI != null && kbI.pKey.wasPressedThisFrame));

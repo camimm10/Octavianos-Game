@@ -3,7 +3,8 @@ using UnityEngine.InputSystem;
 
 /// <summary>
 /// Cámara en tercera persona que sigue a Octavio.
-/// Clic derecho + mover ratón: girar la cámara · Rueda: acercar / alejar
+/// Clic derecho + mover ratón (o teclas Q / E): girar la cámara · Rueda: acercar / alejar
+/// R: mirar hacia el haz de luz más cercano (ver GuiaHaces)
 /// Va en la Main Camera.
 /// </summary>
 public class ThirdPersonCamera : MonoBehaviour
@@ -33,6 +34,7 @@ public class ThirdPersonCamera : MonoBehaviour
     void Start()
     {
         if (target != null) yaw = target.eulerAngles.y;
+        if (target != null && GetComponent<GuiaHaces>() == null) GuiaHaces.Crear(this, target);
     }
 
     /// <summary>Coloca la cámara detrás del objetivo mirando en esa dirección (para escenas).</summary>
@@ -69,6 +71,14 @@ public class ThirdPersonCamera : MonoBehaviour
             float scroll = mouse.scroll.ReadValue().y;
             if (Mathf.Abs(scroll) > 0.01f)
                 distance = Mathf.Clamp(distance - scroll * 0.01f, minDistance, maxDistance);
+        }
+
+        // Girar con el teclado (más cómodo en portátiles con panel táctil)
+        var kb = Keyboard.current;
+        if (kb != null)
+        {
+            if (kb.qKey.isPressed) yaw -= 110f * Time.deltaTime;
+            if (kb.eKey.isPressed) yaw += 110f * Time.deltaTime;
         }
 
         Quaternion rot = Quaternion.Euler(pitch, yaw, 0f);

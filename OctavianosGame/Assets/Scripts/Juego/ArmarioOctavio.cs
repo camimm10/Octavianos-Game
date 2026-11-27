@@ -217,6 +217,70 @@ public static class Armario
     }
 }
 
+/// <summary>
+/// Código de estilo (7 letras): lleva el aspecto de Octavio del PC al móvil.
+/// Guarda lo que lleva puesto en cada categoría del armario y qué complementos del móvil lleva.
+/// El PC lo enseña en el armario; en el móvil se escribe en «Octavio como en el PC».
+/// </summary>
+public static class EstiloOctavio
+{
+    const string Letras = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";   // sin I, O, 0, 1 (se confunden)
+    const int Largo = 6;
+
+    /// <summary>Código del aspecto actual, por ejemplo «KDF-4QXA».</summary>
+    public static string Codigo()
+    {
+        long v = 0;
+        foreach (var c in Armario.Categorias) v = v * c.prendas.Length + Math.Max(0, Array.IndexOf(c.prendas, Armario.Puesta(c)));
+        int bits = 0;
+        for (int i = 0; i < ObjetosOctavio.Todos.Length; i++)
+            if (ObjetosOctavio.Tiene(ObjetosOctavio.Todos[i].id) && ObjetosOctavio.Puesto(ObjetosOctavio.Todos[i].id)) bits |= 1 << i;
+        v = v * 32 + bits;
+        var d = new int[Largo];
+        for (int i = Largo - 1; i >= 0; i--) { d[i] = (int)(v % 32); v /= 32; }
+        var txt = new System.Text.StringBuilder();
+        foreach (var x in d) txt.Append(Letras[x]);
+        txt.Append(Letras[Control(d)]);
+        return txt.ToString(0, 3) + "-" + txt.ToString(3, 4);
+    }
+
+    static int Control(int[] d) { int s = 7; for (int i = 0; i < d.Length; i++) s += d[i] * (i + 3); return s % 32; }
+
+    /// <summary>Pone a Octavio como dice el código. Devuelve false si el código no es válido.</summary>
+    public static bool Aplicar(string codigo)
+    {
+        if (codigo == null) return false;
+        var limpio = new string(codigo.ToUpperInvariant().Where(ch => Letras.IndexOf(ch) >= 0).ToArray());
+        if (limpio.Length != Largo + 1) return false;
+        var d = limpio.Take(Largo).Select(ch => Letras.IndexOf(ch)).ToArray();
+        if (Letras.IndexOf(limpio[Largo]) != Control(d)) return false;
+        long v = 0;
+        foreach (var x in d) v = v * 32 + x;
+        int bits = (int)(v % 32); v /= 32;
+        var indices = new int[Armario.Categorias.Length];
+        for (int i = Armario.Categorias.Length - 1; i >= 0; i--)
+        {
+            int n = Armario.Categorias[i].prendas.Length;
+            indices[i] = (int)(v % n); v /= n;
+        }
+        if (v != 0) return false;
+        for (int i = 0; i < indices.Length; i++)
+        {
+            var c = Armario.Categorias[i]; var p = c.prendas[indices[i]];
+            Armario.Comprar(c, p);
+            Armario.Poner(c, p);
+        }
+        for (int i = 0; i < ObjetosOctavio.Todos.Length; i++)
+        {
+            var id = ObjetosOctavio.Todos[i].id;
+            bool lleva = (bits & (1 << i)) != 0;
+            if (lleva) ObjetosOctavio.Desbloquear(id);
+            if (ObjetosOctavio.Tiene(id)) ObjetosOctavio.Poner(id, lleva);
+        }
+        return true;
+    }
+}
+
 /// <summary>Construye lo que lleva puesto Octavio: forma, ojos, dibujos de la piel, gorros, ropa y detalles de la cara.</summary>
 public class VestuarioOctavio : MonoBehaviour
 {

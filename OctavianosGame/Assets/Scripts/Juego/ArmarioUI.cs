@@ -16,7 +16,7 @@ public class ArmarioUI : MonoBehaviour
 {
     Action alCerrar;
     GameObject raiz;
-    Text textoAlgas, tituloCat, ayudaCat, mensaje;
+    Text textoAlgas, tituloCat, ayudaCat, mensaje, codigoMovil;
     RectTransform bVolver, vista;
     readonly List<RectTransform> bCats = new List<RectTransform>();
     readonly List<Image> fondosCats = new List<Image>();
@@ -65,13 +65,14 @@ public class ArmarioUI : MonoBehaviour
         UIKit.Label(raiz.transform, "Girar", new Vector2(0.03f, 0.105f), new Vector2(0.42f, 0.14f), "Arrastra con el ratón para girarle", 22, new Color(1f, 1f, 1f, 0.5f));
         CrearVistaPrevia();
 
-        // Pestañas de categorías (3 filas de 4)
-        for (int i = 0; i < Armario.Categorias.Length; i++)
+        // Pestañas de categorías (3 filas de 5) + la de complementos del móvil
+        for (int i = 0; i <= Armario.Categorias.Length; i++)
         {
-            int fila = i / 4, col = i % 4;
-            float x0 = 0.45f + col * 0.131f, y1 = 0.885f - fila * 0.05f;
-            var img = UIKit.Panel(raiz.transform, "Cat" + i, new Vector2(x0, y1 - 0.043f), new Vector2(x0 + 0.125f, y1), new Color(1f, 1f, 1f, 0.1f));
-            UIKit.Label(img.transform, "Texto", Vector2.zero, Vector2.one, Armario.Categorias[i].nombre, 26, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
+            int fila = i / 5, col = i % 5;
+            float x0 = 0.45f + col * 0.104f, y1 = 0.885f - fila * 0.05f;
+            var img = UIKit.Panel(raiz.transform, "Cat" + i, new Vector2(x0, y1 - 0.043f), new Vector2(x0 + 0.099f, y1), new Color(1f, 1f, 1f, 0.1f));
+            string nombreCat = i < Armario.Categorias.Length ? Armario.Categorias[i].nombre : "Del móvil";
+            UIKit.Label(img.transform, "Texto", Vector2.zero, Vector2.one, nombreCat, 23, Color.white, TextAnchor.MiddleCenter, FontStyle.Bold);
             int ic = i;
             HacerBoton(img, () => { cat = ic; Refrescar(); });
             bCats.Add(img.rectTransform); fondosCats.Add(img);
@@ -97,6 +98,9 @@ public class ArmarioUI : MonoBehaviour
         }
         mensaje = UIKit.Label(raiz.transform, "Mensaje", new Vector2(0.45f, 0.12f), new Vector2(0.97f, 0.19f), "", 28, new Color(1f, 0.9f, 0.6f), TextAnchor.MiddleCenter, FontStyle.Bold);
         bVolver = Juego.Boton(raiz.transform, "Volver  (Esc)", 0.015f, new Color(0.5f, 0.5f, 0.55f));
+        // Código para ver a Octavio igual en la RA del móvil
+        codigoMovil = UIKit.Label(raiz.transform, "CodigoMovil", new Vector2(0.67f, 0.015f), new Vector2(0.97f, 0.105f), "", 26, Color.white, TextAnchor.MiddleRight);
+        codigoMovil.supportRichText = true;
         HacerBoton(bVolver.GetComponent<Image>(), Cerrar);
         raiz.SetActive(false);
     }
@@ -169,8 +173,10 @@ public class ArmarioUI : MonoBehaviour
     void Refrescar()
     {
         textoAlgas.text = $"Algas doradas: {Algas.Cantidad}";
+        codigoMovil.text = $"Código para el móvil (RA):\n<size=40><color=#FFD65A>{EstiloOctavio.Codigo()}</color></size>";
         for (int i = 0; i < fondosCats.Count; i++)
             fondosCats[i].color = i == cat ? new Color(StageFlow.Mente.r, StageFlow.Mente.g, StageFlow.Mente.b, 0.55f) : new Color(1f, 1f, 1f, 0.1f);
+        if (EsMovil) { RefrescarMovil(); return; }
         var c = Armario.Categorias[cat];
         tituloCat.text = c.nombre;
         ayudaCat.text = c.ayuda;
@@ -191,8 +197,52 @@ public class ArmarioUI : MonoBehaviour
         }
     }
 
+    bool EsMovil => cat == Armario.Categorias.Length;
+
+    // Pestaña «Del móvil»: complementos dibujados en la app; se ponen o se guardan gratis
+    void RefrescarMovil()
+    {
+        tituloCat.text = "Complementos del móvil";
+        ayudaCat.text = "Los que dibujaste en la app. Clic para ponérselo o guardarlo en el armario.";
+        var todos = ObjetosOctavio.Todos;
+        for (int i = 0; i < MaxPrendas; i++)
+        {
+            bool hay = i < todos.Length;
+            bPrendas[i].gameObject.SetActive(hay);
+            if (!hay) continue;
+            var o = todos[i];
+            bool tiene = ObjetosOctavio.Tiene(o.id), lleva = tiene && ObjetosOctavio.Puesto(o.id);
+            nombres[i].text = o.nombre;
+            estados[i].text = !tiene ? "Dibújalo en la app del móvil" : lleva ? "Puesto · clic para guardarlo" : "En el armario · clic para ponérselo";
+            estados[i].color = lleva ? new Color(0.5f, 1f, 0.6f) : tiene ? Color.white : new Color(1f, 1f, 1f, 0.45f);
+            fondosPrendas[i].color = lleva ? new Color(0.3f, 0.9f, 0.45f, 0.25f) : new Color(1f, 1f, 1f, tiene ? 0.08f : 0.04f);
+            muestras[i].gameObject.SetActive(true);
+            muestras[i].color = tiene ? o.color : new Color(o.color.r, o.color.g, o.color.b, 0.3f);
+        }
+    }
+
+    void ElegirMovil(int i)
+    {
+        var todos = ObjetosOctavio.Todos;
+        if (i >= todos.Length) return;
+        var o = todos[i];
+        if (!ObjetosOctavio.Tiene(o.id))
+        {
+            mensaje.text = $"Aún no tienes «{o.nombre}». Dibújalo en la app del móvil y tráelo con su código de farolillos.";
+            return;
+        }
+        bool ponerlo = !ObjetosOctavio.Puesto(o.id);
+        ObjetosOctavio.Poner(o.id, ponerlo);
+        mensaje.text = ponerlo
+            ? (o.id == "corona" && Armario.LlevaGorro ? $"Octavio se pone: {o.nombre} (quítale el gorro para que se vea)." : $"Octavio se pone: {o.nombre}.")
+            : $"«{o.nombre}» guardado en el armario.";
+        Aplicar();
+        Refrescar();
+    }
+
     void Elegir(int i)
     {
+        if (EsMovil) { ElegirMovil(i); return; }
         var c = Armario.Categorias[cat];
         if (i >= c.prendas.Length) return;
         var p = c.prendas[i];

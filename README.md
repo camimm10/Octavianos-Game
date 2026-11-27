@@ -43,8 +43,9 @@ La idea es sencilla: **lo que haces para cuidarte en la vida real hace crecer a 
 
 ### Cómo se juega
 - **Nadar:** W A S D o flechas · **Hablar:** E · **Hablar con luz:** 1 ● · 2 ■ · 3 ▲ · **Pausa:** Esc
+- **Cámara:** Q / E o clic derecho + ratón para girar · rueda para acercar · **R** para mirar hacia el haz de luz. Arriba a la derecha, una **brújula** señala el haz de luz más cercano y a cuántos metros está.
 - En cada etapa llegas a una **prueba** y eliges tu camino: **MENTE** (lógica y lenguaje), **TENTÁCULOS** (habilidad) o **CORAZÓN** (emociones y empatía). Si fallas, puedes probar otro.
-- Cada minijuego empieza con una **pantalla de descripción e instrucciones**. Ahí eliges la **dificultad** (Fácil, Normal o Difícil, con F1-F3 o clic). Las pruebas de programar en Destello no tienen niveles: traen su propia chuleta (tecla H).
+- Cada minijuego empieza con una **pantalla de descripción e instrucciones**. Ahí eliges la **dificultad** (Fácil, Normal o Difícil, con Ctrl+F1, Ctrl+F2, Ctrl+F3 o clic). Las pruebas de programar en Destello no tienen niveles: traen su propia chuleta (tecla H).
 - En **Difícil** puedes comprar una **pista** con algas doradas. La pista se queda a la vista durante toda la prueba.
 - Al superar una prueba ganas **algas doradas**: +2 en Fácil, +3 en Normal y +5 en Difícil.
 - Las zonas tienen límites: Octavio nunca se pierde en la oscuridad.
@@ -62,7 +63,7 @@ La idea es sencilla: **lo que haces para cuidarte en la vida real hace crecer a 
 Las pruebas de **Mente** usan el lenguaje **Destello** de verdad: rojo ● = 0, verde ■ = 1 y azul ▲ = 2, en base 3, con una pila e instrucciones como IMPRIMIR, PALABRA o MIENTRAS.
 
 ### El Armario de Octavio
-Con las algas doradas personalizas a Octavio: **color** de piel, **dibujos** (lunares, rayas, estrellas, corazones, manchas), **brillo**, **forma**, **tamaño**, **ojos** (tamaño, forma, color del iris, pestañas), **gorros** (copa, lana, gorra, lazo, corona de flores), **ropa** (tutú, vestido, bufanda, perlas) y **cara** (gafas, mejillas, bigote). Octavio aparece en 3D girando, y lo que compras lo lleva en todas las etapas.
+Con las algas doradas personalizas a Octavio: **color** de piel, **dibujos** (lunares, rayas, estrellas, corazones, manchas), **brillo**, **forma**, **tamaño**, **ojos** (tamaño, forma, color del iris, pestañas), **gorros** (copa, lana, gorra, lazo, corona de flores), **ropa** (tutú, vestido, bufanda, perlas) y **cara** (gafas, mejillas, bigote). Octavio aparece en 3D girando, y lo que compras lo lleva en todas las etapas. En la pestaña **Del móvil** le pones o le guardas los complementos que dibujaste en la app (corona, pajarita…). Abajo a la derecha sale un **código de 7 letras**: escríbelo en el móvil («Octavio como en el PC») y en la cámara RA saldrá igual que en el PC.
 
 ---
 
