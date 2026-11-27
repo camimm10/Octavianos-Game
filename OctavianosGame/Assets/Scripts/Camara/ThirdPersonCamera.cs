@@ -9,6 +9,9 @@ using UnityEngine.InputSystem;
 /// </summary>
 public class ThirdPersonCamera : MonoBehaviour
 {
+    OctavioSwimController jugador;
+    DialogueUI dialogo;
+    bool buscadoDialogo, eBloqueada;
     [SerializeField] Transform target;
 
     [Header("Distancia")]
@@ -74,11 +77,21 @@ public class ThirdPersonCamera : MonoBehaviour
         }
 
         // Girar con el teclado (más cómodo en portátiles con panel táctil)
+        // Solo mientras Octavio se puede mover: en los diálogos la E sirve para pasar el texto
         var kb = Keyboard.current;
+        if (jugador == null && target != null) jugador = target.GetComponentInParent<OctavioSwimController>() ?? target.GetComponentInChildren<OctavioSwimController>();
+        if (!buscadoDialogo || (dialogo == null && Time.frameCount % 60 == 0)) { dialogo = FindAnyObjectByType<DialogueUI>(); buscadoDialogo = true; }
+        bool puedeGirar = (jugador == null || jugador.CanMove) && (dialogo == null || !dialogo.IsOpen);
         if (kb != null)
         {
-            if (kb.qKey.isPressed) yaw -= 110f * Time.deltaTime;
-            if (kb.eKey.isPressed) yaw += 110f * Time.deltaTime;
+            // La E que se pulsó para pasar un diálogo no gira la cámara hasta que se suelta
+            if (!kb.eKey.isPressed) eBloqueada = false;
+            else if (!puedeGirar) eBloqueada = true;
+            if (puedeGirar && Time.timeScale > 0f)
+            {
+                if (kb.qKey.isPressed) yaw -= 110f * Time.deltaTime;
+                if (kb.eKey.isPressed && !eBloqueada) yaw += 110f * Time.deltaTime;
+            }
         }
 
         Quaternion rot = Quaternion.Euler(pitch, yaw, 0f);
